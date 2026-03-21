@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baro-Dap 관리자 대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">⚡ Baro-Dap</span>
+  <div class="nav-links">
+    <a href="/">민원 접수</a>
+    <a href="/admin" style="color:var(--cyan);">관리자</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>관리자 대시보드</h1>
+    <p>민원 현황 모니터링 및 처리</p>
+  </div>
+
+  <!-- 통계 카드 -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">전체 민원</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--warning)" id="statPending">—</div>
+      <div class="stat-label">대기 중</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statProcessing">—</div>
+      <div class="stat-label">처리 중</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--success)" id="statResponded">—</div>
+      <div class="stat-label">답변 완료</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--danger)" id="statCritical">—</div>
+      <div class="stat-label">긴급 민원</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statAvgRisk">—</div>
+      <div class="stat-label">평균 위험도</div>
+    </div>
+  </div>
+
+  <!-- 필터 & 새로고침 -->
+  <div style="display:flex; gap:0.7rem; margin-bottom:1rem; flex-wrap:wrap; align-items:center;">
+    <select id="filterStatus" onchange="loadComplaints()" style="
+      background:var(--bg-card); border:1px solid var(--cyan-border);
+      color:var(--text-primary); padding:0.5rem 1rem; border-radius:8px;
+      font-family:inherit; font-size:0.9rem; outline:none; cursor:pointer;">
+      <option value="">전체 상태</option>
+      <option value="pending">대기 중</option>
+      <option value="processing">처리 중</option>
+      <option value="responded">답변 완료</option>
+      <option value="closed">종결</option>
+    </select>
+    <button class="btn btn-secondary" onclick="loadAll()" style="padding:0.5rem 1rem;">
+      🔄 새로고침
+    </button>
+  </div>
+
+  <!-- 민원 목록 테이블 -->
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>제목</th>
+            <th>유형</th>
+            <th>담당부서</th>
+            <th>우선순위</th>
+            <th>긴급도</th>
+            <th>위험도</th>
+            <th>상태</th>
+            <th>접수일시</th>
+          </tr>
+        </thead>
+        <tbody id="complaintsTbody">
+          <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:2rem;">
+            로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 민원 상세 모달 -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">민원 상세</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+      <div>
+        <div class="ai-section-label">민원 유형</div>
+        <div id="mCategory" class="ai-section-content">—</div>
+      </div>
+      <div>
+        <div class="ai-section-label">담당 부서</div>
+        <div id="mDepartment" class="ai-section-content">—</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+      <div>
+        <div class="score-bar">
+          <div class="score-bar-label"><span>긴급도</span><span id="mUrgencyVal">0</span></div>
+          <div class="score-track"><div class="score-fill urgency" id="mUrgencyBar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="score-bar">
+          <div class="score-bar-label"><span>위험도</span><span id="mRiskVal">0</span></div>
+          <div class="score-track"><div class="score-fill risk" id="mRiskBar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-label">민원 원문</div>
+      <div id="mContent" class="ai-section-content"
+           style="background:var(--bg-secondary); padding:0.8rem; border-radius:8px; max-height:120px; overflow-y:auto;">—</div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-label">AI 요약</div>
+      <div id="mSummary" class="ai-section-content">—</div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-label">사실관계</div>
+      <div id="mFacts" class="ai-section-content">—</div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-label">감정 분석</div>
+      <div id="mEmotions" class="ai-section-content">—</div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-label">자동 생성 답변</div>
+      <div id="mResponse" class="ai-section-content"
+           style="background:var(--bg-secondary); padding:0.8rem; border-radius:8px; line-height:1.7;">—</div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-label">최종 답변 (담당자 작성)</div>
+      <textarea id="mFinalResponse" rows="4"
+        style="width:100%; background:var(--bg-secondary); border:1px solid var(--cyan-border);
+               color:var(--text-primary); padding:0.8rem; border-radius:8px; font-family:inherit;
+               font-size:0.9rem; resize:vertical; outline:none;"
+        placeholder="AI 답변을 수정하거나 직접 작성하세요..."></textarea>
+    </div>
+
+    <div style="display:flex; gap:0.7rem; margin-top:1rem; flex-wrap:wrap;">
+      <button class="btn btn-secondary" onclick="regenerateResponse()" id="regenBtn">
+        🤖 답변 재생성
+      </button>
+      <button class="btn btn-primary" onclick="submitResponse('responded')" id="respondBtn">
+        ✅ 답변 완료
+      </button>
+      <button class="btn btn-secondary" onclick="submitResponse('closed')" style="margin-left:auto;">
+        종결 처리
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

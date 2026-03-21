@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baro-Dap 민원 접수</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">⚡ Baro-Dap</span>
+  <div class="nav-links">
+    <a href="/">민원 접수</a>
+    <a href="/admin">관리자</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>민원 접수</h1>
+    <p>AI가 자동으로 분류하고 답변 초안을 작성합니다</p>
+  </div>
+
+  <div style="max-width:680px; margin:0 auto;">
+    <div class="card">
+      <div class="card-title">📝 민원 내용 입력</div>
+
+      <form id="complaintForm">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label>이름 (선택)</label>
+            <input type="text" id="name" placeholder="홍길동" />
+          </div>
+          <div class="form-group">
+            <label>연락처 (선택)</label>
+            <input type="text" id="contact" placeholder="010-0000-0000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>민원 제목 <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="title" placeholder="민원 제목을 간략히 입력해주세요" required />
+        </div>
+
+        <div class="form-group">
+          <label>민원 내용 <span style="color:var(--danger)">*</span></label>
+          <textarea id="content" placeholder="불편하셨던 내용을 자세히 작성해주세요..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%; justify-content:center;">
+          민원 접수하기
+        </button>
+      </form>
+    </div>
+
+    <!-- AI 처리 결과 -->
+    <div class="ai-result" id="aiResult">
+      <div class="ai-result-header">
+        <span id="aiStatusIcon">⏳</span>
+        <span id="aiStatusText">AI가 민원을 분석 중입니다...</span>
+      </div>
+
+      <div id="aiContent" style="display:none;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div>
+            <div class="ai-section-label">민원 유형</div>
+            <div id="resCategory" class="ai-section-content">—</div>
+          </div>
+          <div>
+            <div class="ai-section-label">담당 부서</div>
+            <div id="resDepartment" class="ai-section-content">—</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div>
+            <div class="ai-section-label">우선순위</div>
+            <div id="resPriority">—</div>
+          </div>
+          <div>
+            <div class="ai-section-label">민원 번호</div>
+            <div id="resId" class="ai-section-content" style="color:var(--cyan);">—</div>
+          </div>
+        </div>
+
+        <div class="score-bar">
+          <div class="score-bar-label">
+            <span>긴급도</span><span id="urgencyVal">0</span>
+          </div>
+          <div class="score-track">
+            <div class="score-fill urgency" id="urgencyBar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="score-bar" style="margin-top:0.5rem;">
+          <div class="score-bar-label">
+            <span>위험도</span><span id="riskVal">0</span>
+          </div>
+          <div class="score-track">
+            <div class="score-fill risk" id="riskBar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="ai-section" style="margin-top:1rem;">
+          <div class="ai-section-label">AI 요약</div>
+          <div id="resSummary" class="ai-section-content">—</div>
+        </div>
+
+        <div class="ai-section">
+          <div class="ai-section-label">자동 생성 답변 초안</div>
+          <div id="resResponse" class="ai-section-content"
+               style="background:var(--bg-primary); padding:1rem; border-radius:8px; line-height:1.7;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 새 민원 버튼 -->
+    <div id="resetArea" style="display:none; text-align:center; margin-top:1rem;">
+      <button class="btn btn-secondary" onclick="resetForm()">새 민원 접수</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/main.js"></script>
+</body>
+</html>
