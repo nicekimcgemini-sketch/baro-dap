@@ -1,8 +1,3 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "cd backend-java && mvn package -DskipTests"
-
 [deploy]
-startCommand = "cd backend-java && java -jar target/baro-dap-1.0.0.jar"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
