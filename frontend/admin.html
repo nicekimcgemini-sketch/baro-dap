@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Baro-Dap 관리자 대시보드</title>
+  <title>Baro-Dap — 관리자 대시보드</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <nav>
-  <span class="nav-brand">⚡ Baro-Dap</span>
+  <span class="nav-brand">Baro-Dap</span>
   <div class="nav-links">
     <a href="/">민원 접수</a>
     <a href="/admin" style="color:var(--cyan);">관리자</a>
@@ -53,24 +53,21 @@
   </div>
 
   <!-- 필터 & 새로고침 -->
-  <div style="display:flex; gap:0.7rem; margin-bottom:1rem; flex-wrap:wrap; align-items:center;">
-    <select id="filterStatus" onchange="loadComplaints()" style="
-      background:var(--bg-card); border:1px solid var(--cyan-border);
-      color:var(--text-primary); padding:0.5rem 1rem; border-radius:8px;
-      font-family:inherit; font-size:0.9rem; outline:none; cursor:pointer;">
+  <div style="display:flex; gap:0.7rem; margin-bottom:1.2rem; flex-wrap:wrap; align-items:center;">
+    <select id="filterStatus" onchange="loadComplaints()">
       <option value="">전체 상태</option>
       <option value="pending">대기 중</option>
       <option value="processing">처리 중</option>
       <option value="responded">답변 완료</option>
       <option value="closed">종결</option>
     </select>
-    <button class="btn btn-secondary" onclick="loadAll()" style="padding:0.5rem 1rem;">
-      🔄 새로고침
+    <button class="btn btn-secondary" onclick="loadAll()" style="padding:0.55rem 1rem; font-size:0.88rem;">
+      새로고침
     </button>
   </div>
 
   <!-- 민원 목록 테이블 -->
-  <div class="card">
+  <div class="card" style="padding:0; overflow:hidden;">
     <div class="table-wrap">
       <table>
         <thead>
@@ -87,7 +84,7 @@
           </tr>
         </thead>
         <tbody id="complaintsTbody">
-          <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:2rem;">
+          <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:3rem;">
             로딩 중...</td></tr>
         </tbody>
       </table>
@@ -103,7 +100,7 @@
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.2rem;">
       <div>
         <div class="ai-section-label">민원 유형</div>
         <div id="mCategory" class="ai-section-content">—</div>
@@ -114,7 +111,7 @@
       </div>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.2rem;">
       <div>
         <div class="score-bar">
           <div class="score-bar-label"><span>긴급도</span><span id="mUrgencyVal">0</span></div>
@@ -129,10 +126,12 @@
       </div>
     </div>
 
+    <div class="divider"></div>
+
     <div class="ai-section">
       <div class="ai-section-label">민원 원문</div>
       <div id="mContent" class="ai-section-content"
-           style="background:var(--bg-secondary); padding:0.8rem; border-radius:8px; max-height:120px; overflow-y:auto;">—</div>
+           style="background:var(--bg-input); padding:0.9rem 1rem; border-radius:8px; max-height:130px; overflow-y:auto; border:1px solid rgba(56,189,248,0.1); line-height:1.7;">—</div>
     </div>
 
     <div class="ai-section">
@@ -150,29 +149,28 @@
       <div id="mEmotions" class="ai-section-content">—</div>
     </div>
 
+    <div class="divider"></div>
+
     <div class="ai-section">
       <div class="ai-section-label">자동 생성 답변</div>
       <div id="mResponse" class="ai-section-content"
-           style="background:var(--bg-secondary); padding:0.8rem; border-radius:8px; line-height:1.7;">—</div>
+           style="background:var(--bg-input); padding:0.9rem 1rem; border-radius:8px; line-height:1.8; border:1px solid rgba(56,189,248,0.1);">—</div>
     </div>
 
     <div class="ai-section">
       <div class="ai-section-label">최종 답변 (담당자 작성)</div>
       <textarea id="mFinalResponse" rows="4"
-        style="width:100%; background:var(--bg-secondary); border:1px solid var(--cyan-border);
-               color:var(--text-primary); padding:0.8rem; border-radius:8px; font-family:inherit;
-               font-size:0.9rem; resize:vertical; outline:none;"
         placeholder="AI 답변을 수정하거나 직접 작성하세요..."></textarea>
     </div>
 
-    <div style="display:flex; gap:0.7rem; margin-top:1rem; flex-wrap:wrap;">
+    <div style="display:flex; gap:0.7rem; margin-top:1.2rem; flex-wrap:wrap;">
       <button class="btn btn-secondary" onclick="regenerateResponse()" id="regenBtn">
-        🤖 답변 재생성
+        답변 재생성
       </button>
       <button class="btn btn-primary" onclick="submitResponse('responded')" id="respondBtn">
-        ✅ 답변 완료
+        답변 완료
       </button>
-      <button class="btn btn-secondary" onclick="submitResponse('closed')" style="margin-left:auto;">
+      <button class="btn btn-secondary" onclick="submitResponse('closed')" style="margin-left:auto; color:var(--text-muted); border-color:rgba(255,255,255,0.1);">
         종결 처리
       </button>
     </div>
