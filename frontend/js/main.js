@@ -24,17 +24,22 @@ document.getElementById('complaintForm').addEventListener('submit', async (e) =>
         content,
       }),
     });
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = '접수 실패';
+      try { msg = JSON.parse(text).detail || msg; } catch (_) { msg = text || `서버 오류 (${res.status})`; }
+      throw new Error(msg);
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || '접수 실패');
 
-    currentComplaintId = data.complaint_id;
+    currentComplaintId = data.id;
 
     // AI 결과 박스 표시
     const aiResult = document.getElementById('aiResult');
     aiResult.classList.add('show');
     aiResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    document.getElementById('resId').textContent = `#${data.complaint_id}`;
+    document.getElementById('resId').textContent = `#${data.id}`;
 
     // 폴링 시작
     pollInterval = setInterval(pollStatus, 2500);
@@ -52,9 +57,11 @@ async function pollStatus() {
     const res = await fetch(`${API}/api/complaints/${currentComplaintId}/status`);
     const data = await res.json();
 
-    if (data.status === 'processing' || data.status === 'responded') {
+    if (data.status === 'responded') {
       clearInterval(pollInterval);
-      showAIResult(data);
+      const detailRes = await fetch(`${API}/api/complaints/${currentComplaintId}`);
+      const detail = await detailRes.json();
+      showAIResult(detail);
     }
   } catch (_) {}
 }
