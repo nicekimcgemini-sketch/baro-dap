@@ -1,6 +1,9 @@
 -- baro-dap 데이터베이스 스키마
 -- Supabase SQL Editor에서 실행하세요
 
+-- gen_random_uuid() 사용을 위한 확장
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- 1. staff (담당자) 테이블
 CREATE TABLE IF NOT EXISTS staff (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,7 +64,8 @@ CREATE POLICY "complaints_update_auth" ON complaints
 
 -- staff: 인증된 사용자만 접근 가능
 CREATE POLICY "staff_all_auth" ON staff
-  FOR ALL USING (auth.role() = 'authenticated');
+  FOR ALL USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
 -- 5. 샘플 담당자 데이터
 INSERT INTO staff (name, department, role, email, specialties) VALUES

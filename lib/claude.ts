@@ -1,11 +1,14 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { AiAnalysis, Priority } from './types'
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export async function analyzeComplaint(title: string, content: string): Promise<AiAnalysis> {
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    generationConfig: { responseMimeType: 'application/json' },
+  })
+
   const prompt = `당신은 민원 처리 전문가입니다. 다음 민원을 분석하고 JSON 형식으로 답변해주세요.
 
 민원 제목: ${title}
@@ -20,13 +23,8 @@ export async function analyzeComplaint(title: string, content: string): Promise<
   "reasoning": "긴급도와 카테고리를 이렇게 판단한 이유 (한국어, 1~2문장)"
 }`
 
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
-  })
-
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const result = await model.generateContent(prompt)
+  const text = result.response.text()
 
   try {
     const parsed = JSON.parse(text)
@@ -38,7 +36,6 @@ export async function analyzeComplaint(title: string, content: string): Promise<
       reasoning: parsed.reasoning,
     }
   } catch {
-    // JSON 파싱 실패 시 기본값
     return {
       priority: 3,
       category: '기타',
@@ -56,7 +53,6 @@ export async function findBestStaff(
 ): Promise<string | null> {
   if (staffList.length === 0) return null
 
-  // specialties에 카테고리가 포함된 담당자 우선
   const matched = staffList.find((s) =>
     s.specialties.some((sp) => sp.includes(category) || category.includes(sp))
   )

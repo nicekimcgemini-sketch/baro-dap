@@ -2,16 +2,50 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Complaint, ComplaintStatus, PRIORITY_EMOJI, PRIORITY_LABEL, STATUS_LABEL } from '@/lib/types'
+import { Complaint, ComplaintStatus, Priority, PRIORITY_EMOJI, PRIORITY_LABEL, STATUS_LABEL } from '@/lib/types'
+import { formatDate } from '@/lib/utils'
 
 interface Props {
   complaint: Complaint
 }
 
+const CATEGORIES = ['시설', 'IT', '행정', '민원', '기타']
+const PRIORITIES: Priority[] = [1, 2, 3, 4, 5]
+
 export default function ComplaintDetail({ complaint }: Props) {
   const router = useRouter()
   const [finalResponse, setFinalResponse] = useState(complaint.final_response ?? complaint.ai_response ?? '')
   const [saving, setSaving] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [showManual, setShowManual] = useState(false)
+  const [manualPriority, setManualPriority] = useState<Priority>(complaint.priority ?? 3)
+  const [manualCategory, setManualCategory] = useState(complaint.category ?? '기타')
+  const [manualSaving, setManualSaving] = useState(false)
+
+  const reAnalyze = async () => {
+    setAnalyzing(true)
+    const res = await fetch('/api/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ complaint_id: complaint.id }),
+    })
+    const data = await res.json()
+    if (!res.ok) alert('AI 분석 오류: ' + data.error)
+    else router.refresh()
+    setAnalyzing(false)
+  }
+
+  const saveManual = async () => {
+    setManualSaving(true)
+    await fetch(`/api/complaints/${complaint.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priority: manualPriority, category: manualCategory }),
+    })
+    setManualSaving(false)
+    setShowManual(false)
+    router.refresh()
+  }
 
   const updateStatus = async (status: ComplaintStatus) => {
     setSaving(true)
@@ -46,71 +80,150 @@ export default function ComplaintDetail({ complaint }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* 좌측: 민원 정보 */}
       <div className="space-y-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-bold text-gray-800 text-lg mb-4">{complaint.title}</h2>
-
+        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
+          <h2 className="font-bold text-spring-text text-lg mb-4">{complaint.title}</h2>
           <div className="space-y-3 text-sm">
             <div>
-              <span className="text-gray-400 block mb-1">민원 내용</span>
-              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{complaint.content}</p>
+              <span className="text-spring-text-light block mb-1">민원 내용</span>
+              <p className="text-spring-text whitespace-pre-wrap leading-relaxed">{complaint.content}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-spring-pink-light">
               <div>
-                <span className="text-gray-400 block mb-0.5">접수자</span>
-                <p className="text-gray-700">{complaint.customer_name}</p>
+                <span className="text-spring-text-light block mb-0.5">접수자</span>
+                <p className="text-spring-text">{complaint.customer_name}</p>
               </div>
               <div>
-                <span className="text-gray-400 block mb-0.5">연락처</span>
-                <p className="text-gray-700">{complaint.customer_contact}</p>
+                <span className="text-spring-text-light block mb-0.5">연락처</span>
+                <p className="text-spring-text">{complaint.customer_contact}</p>
               </div>
             </div>
-            <div className="pt-3 border-t border-gray-100">
-              <span className="text-gray-400 block mb-0.5">접수일시</span>
-              <p className="text-gray-700">{new Date(complaint.created_at).toLocaleString('ko-KR')}</p>
+            <div className="pt-3 border-t border-spring-pink-light">
+              <span className="text-spring-text-light block mb-0.5">접수일시</span>
+              <p className="text-spring-text">{formatDate(complaint.created_at)}</p>
             </div>
           </div>
         </div>
 
         {/* 상태 변경 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-gray-400 block mb-1">현재 상태</span>
+              <span className="text-xs text-spring-text-light block mb-1">현재 상태</span>
               <StatusBadge status={complaint.status} />
             </div>
-            <div className="flex gap-2">
-              {nextStatus[complaint.status] && (
-                <button
-                  onClick={() => updateStatus(nextStatus[complaint.status]!)}
-                  disabled={saving}
-                  className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {STATUS_LABEL[nextStatus[complaint.status]!]}으로 변경
-                </button>
-              )}
-            </div>
+            {nextStatus[complaint.status] && (
+              <button
+                onClick={() => updateStatus(nextStatus[complaint.status]!)}
+                disabled={saving}
+                className="spring-gradient text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-50 shadow-sm"
+              >
+                {STATUS_LABEL[nextStatus[complaint.status]!]}으로 변경
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* 우측: AI 분석 결과 */}
       <div className="space-y-4">
-        <div className="bg-blue-50 rounded-xl border border-blue-100 p-5">
-          <h3 className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
+        <div className="bg-spring-emerald-light rounded-2xl border border-spring-emerald/30 p-5">
+          <h3 className="font-semibold text-spring-emerald-dark mb-4 flex items-center gap-2">
             <span>🤖</span> AI 분석 결과
           </h3>
+
+          {/* AI 분석 / 수동 입력 버튼 */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={reAnalyze}
+              disabled={analyzing}
+              className="flex-1 spring-gradient text-white text-sm py-2 rounded-xl hover:opacity-90 disabled:opacity-50 shadow-sm"
+            >
+              {analyzing ? 'AI 분석 중...' : '🔄 AI 분석 실행'}
+            </button>
+            <button
+              onClick={() => setShowManual(!showManual)}
+              className="flex-1 bg-white border border-spring-pink-border text-spring-text text-sm py-2 rounded-xl hover:border-spring-pink transition"
+            >
+              ✏️ 수동 입력
+            </button>
+          </div>
+
+          {/* 수동 입력 폼 */}
+          {showManual && (
+            <div className="mb-4 bg-white rounded-xl border border-spring-pink-border p-4 space-y-3">
+              <p className="text-xs font-semibold text-spring-text">수동 분석 입력</p>
+
+              <div>
+                <span className="text-xs text-spring-text-light block mb-1.5">긴급도</span>
+                <div className="flex gap-2">
+                  {PRIORITIES.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setManualPriority(p)}
+                      className={`flex-1 py-1.5 rounded-lg text-lg transition border ${
+                        manualPriority === p
+                          ? 'border-spring-pink bg-spring-pink-light'
+                          : 'border-spring-pink-border bg-white hover:bg-spring-pink-light'
+                      }`}
+                      title={PRIORITY_LABEL[p]}
+                    >
+                      {PRIORITY_EMOJI[p]}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-spring-text-light mt-1 text-center">
+                  {PRIORITY_EMOJI[manualPriority]} {PRIORITY_LABEL[manualPriority]}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-xs text-spring-text-light block mb-1.5">카테고리</span>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setManualCategory(cat)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition border ${
+                        manualCategory === cat
+                          ? 'spring-gradient text-white border-transparent'
+                          : 'border-spring-pink-border text-spring-text hover:border-spring-pink'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={saveManual}
+                  disabled={manualSaving}
+                  className="flex-1 spring-gradient text-white text-sm py-1.5 rounded-xl hover:opacity-90 disabled:opacity-50 shadow-sm"
+                >
+                  {manualSaving ? '저장 중...' : '저장'}
+                </button>
+                <button
+                  onClick={() => setShowManual(false)}
+                  className="flex-1 bg-white border border-spring-pink-border text-spring-text-light text-sm py-1.5 rounded-xl hover:border-spring-pink transition"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
 
           {complaint.priority ? (
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-blue-600 block mb-0.5 text-xs">긴급도</span>
+                  <span className="text-spring-emerald block mb-0.5 text-xs font-medium">긴급도</span>
                   <span className="text-xl">{PRIORITY_EMOJI[complaint.priority]}</span>
-                  <span className="text-gray-700 ml-1">{PRIORITY_LABEL[complaint.priority]}</span>
+                  <span className="text-spring-text ml-1">{PRIORITY_LABEL[complaint.priority]}</span>
                 </div>
                 <div>
-                  <span className="text-blue-600 block mb-0.5 text-xs">카테고리</span>
-                  <span className="bg-white text-gray-700 px-2 py-0.5 rounded text-xs border border-blue-100">
+                  <span className="text-spring-emerald block mb-0.5 text-xs font-medium">카테고리</span>
+                  <span className="bg-white text-spring-text px-2 py-0.5 rounded-full text-xs border border-spring-emerald/30">
                     {complaint.category}
                   </span>
                 </div>
@@ -118,40 +231,40 @@ export default function ComplaintDetail({ complaint }: Props) {
 
               {complaint.ai_analysis && (
                 <div>
-                  <span className="text-blue-600 block mb-0.5 text-xs">분석 이유</span>
-                  <p className="text-gray-600 text-xs">{complaint.ai_analysis.reasoning}</p>
+                  <span className="text-spring-emerald block mb-0.5 text-xs font-medium">분석 이유</span>
+                  <p className="text-spring-text text-xs">{complaint.ai_analysis.reasoning}</p>
                 </div>
               )}
 
               {complaint.assigned_staff && (
-                <div className="pt-2 border-t border-blue-100">
-                  <span className="text-blue-600 block mb-0.5 text-xs">배정 담당자</span>
-                  <p className="text-gray-700">
+                <div className="pt-2 border-t border-spring-emerald/20">
+                  <span className="text-spring-emerald block mb-0.5 text-xs font-medium">배정 담당자</span>
+                  <p className="text-spring-text">
                     {complaint.assigned_staff.name}
-                    <span className="text-gray-400 ml-1">({complaint.assigned_staff.department})</span>
+                    <span className="text-spring-text-light ml-1">({complaint.assigned_staff.department})</span>
                   </p>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-blue-600 text-sm">AI 분석 중입니다...</p>
+            <p className="text-spring-emerald text-sm">AI 분석 결과가 없습니다.</p>
           )}
         </div>
 
         {/* 최종 답변 작성 */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-700 mb-3">최종 답변 작성</h3>
+        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
+          <h3 className="font-semibold text-spring-text mb-3">최종 답변 작성</h3>
           <textarea
             rows={8}
             value={finalResponse}
             onChange={(e) => setFinalResponse(e.target.value)}
             placeholder="AI 예상 답변을 수정하거나 새로 작성하세요"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+            className="w-full border border-spring-pink-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald resize-none bg-spring-bg"
           />
           {complaint.ai_response && finalResponse !== complaint.ai_response && (
             <button
               onClick={() => setFinalResponse(complaint.ai_response!)}
-              className="text-xs text-blue-500 hover:underline mt-1"
+              className="text-xs text-spring-emerald hover:underline mt-1"
             >
               AI 답변으로 되돌리기
             </button>
@@ -159,9 +272,9 @@ export default function ComplaintDetail({ complaint }: Props) {
           <button
             onClick={saveFinalResponse}
             disabled={saving || !finalResponse}
-            className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+            className="mt-3 w-full spring-gradient text-white py-2 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 shadow-sm"
           >
-            {saving ? '저장 중...' : '답변 저장 및 완료 처리'}
+            {saving ? '저장 중...' : '🌸 답변 저장 및 완료 처리'}
           </button>
         </div>
       </div>
@@ -171,10 +284,10 @@ export default function ComplaintDetail({ complaint }: Props) {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    pending: 'bg-yellow-50 text-yellow-700',
-    in_progress: 'bg-blue-50 text-blue-700',
-    resolved: 'bg-green-50 text-green-700',
-    closed: 'bg-gray-100 text-gray-500',
+    pending:     'bg-yellow-50 text-yellow-600',
+    in_progress: 'bg-spring-emerald-light text-spring-emerald',
+    resolved:    'bg-spring-pink-light text-spring-pink',
+    closed:      'bg-gray-100 text-gray-400',
   }
   return (
     <span className={`text-sm px-3 py-1 rounded-full font-medium ${styles[status] ?? ''}`}>

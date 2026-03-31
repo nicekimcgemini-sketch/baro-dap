@@ -1,40 +1,48 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
-export default function Navbar() {
-  const pathname = usePathname()
+interface Props {
+  section: 'counsel' | 'admin'
+}
+
+export default function Navbar({ section }: Props) {
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-      <Link href="/" className="text-xl font-bold text-blue-600">
-        baro-dap
+    <nav className="spring-gradient px-6 py-3 flex items-center justify-between shadow-md">
+      <Link href="/" className="text-xl font-bold text-white tracking-wide drop-shadow">
+        🦜 baro-dap
       </Link>
-      <div className="flex gap-4 text-sm">
-        {pathname.startsWith('/counsel') && (
-          <Link
-            href="/counsel"
-            className="text-gray-600 hover:text-blue-600 font-medium"
-          >
+      <div className="flex gap-4 text-sm items-center">
+        {section === 'counsel' && (
+          <Link href="/counsel" className="text-white/90 hover:text-white font-medium transition">
             민원 목록
           </Link>
         )}
-        {pathname.startsWith('/admin') && (
+        {section === 'admin' && (
           <>
-            <Link href="/admin" className="text-gray-600 hover:text-blue-600 font-medium">
+            <Link href="/admin" className="text-white/90 hover:text-white font-medium transition">
               대시보드
             </Link>
-            <Link href="/admin/staff" className="text-gray-600 hover:text-blue-600 font-medium">
+            <Link href="/admin/staff" className="text-white/90 hover:text-white font-medium transition">
               담당자 관리
             </Link>
           </>
         )}
-        {(pathname.startsWith('/counsel') || pathname.startsWith('/admin')) && (
-          <form action="/api/auth/logout" method="POST">
-            <button className="text-gray-400 hover:text-red-500 text-sm">로그아웃</button>
-          </form>
-        )}
+        <button
+          onClick={handleLogout}
+          className="text-white/70 hover:text-white text-sm transition"
+        >
+          로그아웃
+        </button>
       </div>
     </nav>
   )

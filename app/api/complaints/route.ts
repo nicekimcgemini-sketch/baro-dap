@@ -42,38 +42,49 @@ export async function POST(req: NextRequest) {
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-  // 2. AI 분석 (비동기 처리)
+  // 2. AI 분석 (실패 시 기본값 사용)
+  let analysis
   try {
-    const analysis = await analyzeComplaint(title, content)
-
-    // 3. 담당자 자동 배정
-    const { data: staffList } = await supabase
-      .from('staff')
-      .select('id, name, specialties')
-      .eq('is_active', true)
-      .eq('department', analysis.department)
-
-    const assignedStaffId = await findBestStaff(
-      analysis.category,
-      analysis.department,
-      staffList ?? []
-    )
-
-    // 4. 분석 결과 업데이트
-    await supabase
-      .from('complaints')
-      .update({
-        priority: analysis.priority,
-        category: analysis.category,
-        ai_response: analysis.ai_response,
-        ai_analysis: analysis,
-        assigned_staff_id: assignedStaffId,
-      })
-      .eq('id', complaint.id)
+    analysis = await analyzeComplaint(title, content)
   } catch (err) {
-    console.error('AI 분석 오류:', err)
-    // AI 분석 실패해도 민원은 접수 완료 처리
+    console.error('AI 분석 오류 (기본값 사용):', err)
+    analysis = {
+      priority: 3 as const,
+      category: '기타',
+      department: '현업',
+      ai_response: '담당자가 민원 내용을 검토 후 빠르게 처리해드리겠습니다.',
+      reasoning: 'AI 분석을 사용할 수 없어 기본값으로 처리되었습니다.',
+    }
   }
+
+  // 3. 담당자 자동 배정
+  const { data: staffList, error: staffError } = await supabase
+    .from('staff')
+    .select('id, name, specialties')
+    .eq('is_active', true)
+    .eq('department', analysis.department)
+
+  if (staffError) console.error('담당자 조회 오류:', staffError)
+
+  const assignedStaffId = await findBestStaff(
+    analysis.category,
+    analysis.department,
+    staffList ?? []
+  )
+
+  // 4. 분석 결과 업데이트
+  const { error: updateError } = await supabase
+    .from('complaints')
+    .update({
+      priority: analysis.priority,
+      category: analysis.category,
+      ai_response: analysis.ai_response,
+      ai_analysis: analysis,
+      assigned_staff_id: assignedStaffId,
+    })
+    .eq('id', complaint.id)
+
+  if (updateError) console.error('AI 분석 저장 오류:', updateError)
 
   return NextResponse.json({ id: complaint.id }, { status: 201 })
 }

@@ -29,11 +29,10 @@ export default async function CounselPage({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-800">민원 목록</h1>
-        <span className="text-sm text-gray-400">총 {complaints.length}건</span>
+        <h1 className="text-xl font-bold text-spring-text">민원 목록</h1>
+        <span className="text-sm text-spring-text-light">총 {complaints.length}건</span>
       </div>
 
-      {/* 상태 필터 */}
       <div className="flex gap-2 mb-4">
         {statuses.map(({ value, label }) => {
           const isActive = (searchParams.status ?? '') === value
@@ -41,10 +40,10 @@ export default async function CounselPage({
             <a
               key={value}
               href={value ? `/counsel?status=${value}` : '/counsel'}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-400'
+                  ? 'spring-gradient text-white shadow-md'
+                  : 'bg-white text-spring-text border border-spring-pink-border hover:border-spring-pink'
               }`}
             >
               {label}
