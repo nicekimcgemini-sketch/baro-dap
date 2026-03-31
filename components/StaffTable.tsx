@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Staff } from '@/lib/types'
+import { Staff, StaffRole } from '@/lib/types'
 
 interface Props {
   initialStaff: Staff[]
 }
 
-const emptyForm = {
+const emptyForm: { name: string; department: string; role: StaffRole; email: string; specialties: string } = {
   name: '',
   department: '현업',
-  role: 'counselor' as const,
+  role: 'counselor',
   email: '',
   specialties: '',
 }
@@ -93,7 +93,7 @@ export default function StaffTable({ initialStaff }: Props) {
               <option value="IT">IT</option>
             </select>
             <select value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value as 'counselor' | 'admin' })}
+              onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })}
               className={inputClass}>
               <option value="counselor">상담원</option>
               <option value="admin">관리자</option>
