@@ -3,12 +3,36 @@ import { AiAnalysis, Priority } from './types'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-export async function analyzeComplaint(title: string, content: string): Promise<AiAnalysis> {
+async function generateWithRetry(prompt: string, retries = 2, delayMs = 15000): Promise<string> {
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
     generationConfig: { responseMimeType: 'application/json' },
   })
 
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await model.generateContent(prompt)
+      return result.response.text()
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      const is429 = message.includes('429') || message.includes('Too Many Requests') || message.includes('quota')
+
+      if (is429 && attempt < retries) {
+        // 분당 요청 한도(RPM) 초과 시 15초씩 대기 후 재시도
+        await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)))
+        continue
+      }
+
+      if (is429) {
+        throw new Error('API_RATE_LIMIT')
+      }
+      throw err
+    }
+  }
+  throw new Error('API_RATE_LIMIT')
+}
+
+export async function analyzeComplaint(title: string, content: string): Promise<AiAnalysis> {
   const prompt = `당신은 민원 처리 전문가입니다. 다음 민원을 분석하고 JSON 형식으로 답변해주세요.
 
 민원 제목: ${title}
@@ -23,8 +47,7 @@ export async function analyzeComplaint(title: string, content: string): Promise<
   "reasoning": "긴급도와 카테고리를 이렇게 판단한 이유 (한국어, 1~2문장)"
 }`
 
-  const result = await model.generateContent(prompt)
-  const text = result.response.text()
+  const text = await generateWithRetry(prompt)
 
   try {
     const parsed = JSON.parse(text)

@@ -14,9 +14,31 @@ export default function ComplaintForm() {
     customer_name: '',
     customer_contact: '',
   })
+  const [contactError, setContactError] = useState('')
+
+  const validateContact = (value: string) => {
+    const phoneRegex = /^(01[016789])-?\d{3,4}-?\d{4}$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!phoneRegex.test(value) && !emailRegex.test(value)) {
+      return '올바른 전화번호(010-0000-0000) 또는 이메일 주소를 입력해 주세요.'
+    }
+    return ''
+  }
+
+  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setForm({ ...form, customer_contact: value })
+    if (value) setContactError(validateContact(value))
+    else setContactError('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const contactErr = validateContact(form.customer_contact)
+    if (contactErr) {
+      setContactError(contactErr)
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -97,9 +119,12 @@ export default function ComplaintForm() {
             required
             placeholder="010-1234-5678 또는 이메일"
             value={form.customer_contact}
-            onChange={(e) => setForm({ ...form, customer_contact: e.target.value })}
-            className={inputClass}
+            onChange={handleContactChange}
+            className={`${inputClass} ${contactError ? 'border-spring-pink focus:ring-spring-pink' : ''}`}
           />
+          {contactError && (
+            <p className="text-spring-pink text-xs mt-1">{contactError}</p>
+          )}
         </div>
       </div>
 

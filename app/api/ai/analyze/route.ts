@@ -26,7 +26,12 @@ export async function POST(req: NextRequest) {
     analysis = await analyzeComplaint(complaint.title, complaint.content)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    // 크레딧 부족 등 AI 오류 시 명확하게 반환
+    if (message === 'API_RATE_LIMIT') {
+      return NextResponse.json(
+        { error: '잠시 후 다시 시도해 주세요. (Gemini 무료 플랜은 분당 15회 요청 제한이 있습니다)' },
+        { status: 429 }
+      )
+    }
     return NextResponse.json({ error: `AI 분석 실패: ${message}` }, { status: 502 })
   }
 
