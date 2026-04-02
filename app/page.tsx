@@ -36,7 +36,7 @@ export default async function Home() {
       <header className="spring-gradient px-6 py-4 flex items-center justify-between shadow-md">
         <h1 className="text-2xl font-bold text-white tracking-wide drop-shadow">🦜 baro-dap</h1>
         <Link href="/login" className="text-white/80 hover:text-white text-sm transition">
-          관리자/상담원 로그인
+          관리자/직원 로그인
         </Link>
       </header>
 

@@ -45,7 +45,7 @@ export default function LoginPage() {
           <Link href="/" className="text-2xl font-bold spring-gradient-text">
             🦜 baro-dap
           </Link>
-          <p className="text-spring-text-light text-sm mt-2">관리자 / 상담원 로그인</p>
+          <p className="text-spring-text-light text-sm mt-2">관리자 / 직원 로그인</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-spring-pink-border p-8">

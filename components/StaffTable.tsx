@@ -95,7 +95,7 @@ export default function StaffTable({ initialStaff }: Props) {
             <select value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })}
               className={inputClass}>
-              <option value="counselor">상담원</option>
+              <option value="counselor">실무담당자</option>
               <option value="admin">관리자</option>
             </select>
           </div>
@@ -141,7 +141,7 @@ export default function StaffTable({ initialStaff }: Props) {
                       ? 'bg-spring-pink-light text-spring-pink'
                       : 'bg-spring-emerald-light text-spring-emerald'
                   }`}>
-                    {s.role === 'admin' ? '관리자' : '상담원'}
+                    {s.role === 'admin' ? '관리자' : '실무담당자'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-spring-text-light text-xs">{s.email}</td>
