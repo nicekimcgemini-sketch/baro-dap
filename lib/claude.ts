@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 async function generateWithRetry(prompt: string, retries = 2, delayMs = 15000): Promise<string> {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     generationConfig: { responseMimeType: 'application/json' },
   })
 
@@ -33,17 +33,21 @@ async function generateWithRetry(prompt: string, retries = 2, delayMs = 15000): 
 }
 
 export async function analyzeComplaint(title: string, content: string): Promise<AiAnalysis> {
-  const prompt = `당신은 민원 처리 전문가입니다. 다음 민원을 분석하고 JSON 형식으로 답변해주세요.
+  const prompt = `당신은 신한카드 고객 민원 대응 전문가입니다. 신한카드 고객이 접수한 민원을 분석하고 JSON 형식으로 답변해주세요.
+
+신한카드는 카드 발급, 한도, 결제, 포인트/혜택, 분실/도난, 부정사용, 앱/온라인 서비스 등 금융 서비스를 제공하는 카드사입니다.
+답변은 신한카드 직원이 고객에게 보내는 공식 답변 초안으로, 정중하고 신뢰감 있게 작성해야 합니다.
+금융 민원의 특성상 개인정보 보호, 금융소비자보호법 등을 준수하는 어조를 유지하세요.
 
 민원 제목: ${title}
 민원 내용: ${content}
 
 다음 JSON 형식으로만 답변하세요 (다른 텍스트 없이):
 {
-  "priority": 1~5 사이 숫자 (1=매우낮음, 2=낮음, 3=보통, 4=높음, 5=매우높음),
-  "category": "시설" | "IT" | "행정" | "민원" | "기타" 중 하나,
+  "priority": 1~5 사이 숫자 (1=매우낮음, 2=낮음, 3=보통, 4=높음, 5=매우높음 / 부정사용·분실·개인정보 유출은 5, 결제오류·한도 문의는 3~4, 일반 혜택 문의는 1~2),
+  "category": "결제/청구" | "카드발급/해지" | "한도/승인" | "포인트/혜택" | "분실/도난/부정사용" | "앱/온라인" | "기타" 중 하나,
   "department": "현업" | "IT" 중 하나,
-  "ai_response": "민원에 대한 적절한 답변 초안 (한국어, 정중하게)",
+  "ai_response": "신한카드 공식 답변 초안 (한국어, 정중하고 신뢰감 있게, 3~5문장)",
   "reasoning": "긴급도와 카테고리를 이렇게 판단한 이유 (한국어, 1~2문장)"
 }`
 
