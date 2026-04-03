@@ -29,10 +29,14 @@ CREATE TABLE IF NOT EXISTS complaints (
   ai_response text,
   ai_analysis jsonb,
   assigned_staff_id uuid REFERENCES staff(id),
+  created_by_staff_id uuid REFERENCES staff(id),
   final_response text,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+
+-- 2-1. created_by_staff_id 컬럼 추가 (기존 DB에 없는 경우 실행)
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS created_by_staff_id uuid REFERENCES staff(id);
 
 -- 3. updated_at 자동 갱신 트리거
 CREATE OR REPLACE FUNCTION update_updated_at()

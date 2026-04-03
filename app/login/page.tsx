@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,7 +16,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.')
@@ -25,27 +24,15 @@ export default function LoginPage() {
       return
     }
 
-    const { data: staff } = await supabase
-      .from('staff')
-      .select('role')
-      .eq('email', data.user.email!)
-      .single()
-
-    if (staff?.role === 'admin') {
-      router.push('/admin')
-    } else {
-      router.push('/counsel')
-    }
+    router.push('/dashboard')
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #FFF5F9 0%, #ffffff 100%)' }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold spring-gradient-text">
-            🦜 baro-dap
-          </Link>
-          <p className="text-spring-text-light text-sm mt-2">관리자 / 직원 로그인</p>
+          <span className="text-2xl font-bold spring-gradient-text">🦜 baro-dap</span>
+          <p className="text-spring-text-light text-sm mt-2">상담원 / 관리자 로그인</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-spring-pink-border p-8">

@@ -6,7 +6,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   const { data, error } = await supabase
     .from('complaints')
-    .select('*, assigned_staff:staff(id, name, department, email, specialties)')
+    .select('*')
     .eq('id', params.id)
     .single()
 
@@ -18,7 +18,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const supabase = createServerClient()
   const body = await req.json()
 
-  const allowed = ['status', 'final_response', 'assigned_staff_id', 'priority']
+  const allowed = ['title', 'content', 'customer_name', 'status', 'final_response', 'priority']
   const update: Record<string, unknown> = {}
   for (const key of allowed) {
     if (key in body) update[key] = body[key]
@@ -33,4 +33,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from('complaints')
+    .delete()
+    .eq('id', params.id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

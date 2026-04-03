@@ -1,50 +1,50 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function Navbar() {
   const router = useRouter()
-  const pathname = usePathname()
+  const [userName, setUserName] = useState('')
+  const [userRole, setUserRole] = useState('')
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: staff } = await supabase
+        .from('staff')
+        .select('name, role')
+        .eq('email', user.email!)
+        .single()
+      if (staff) {
+        setUserName(staff.name)
+        setUserRole(staff.role === 'admin' ? '관리자' : '상담원')
+      }
+    }
+    getUser()
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
-  const navLinks = [
-    { href: '/counsel', label: '민원 목록' },
-    { href: '/admin', label: '대시보드' },
-    { href: '/admin/staff', label: '담당자 관리' },
-  ]
-
   return (
     <nav className="spring-gradient px-6 py-3 flex items-center justify-between shadow-md">
-      <Link href="/" className="text-xl font-bold text-white tracking-wide drop-shadow">
+      <Link href="/dashboard" className="text-xl font-bold text-white tracking-wide drop-shadow">
         🦜 baro-dap
       </Link>
-      <div className="flex gap-4 text-sm items-center">
-        {navLinks.map(({ href, label }) => {
-          const isActive = pathname === href || (href !== '/admin' && pathname.startsWith(href))
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`font-medium transition ${
-                isActive
-                  ? 'text-white underline underline-offset-4'
-                  : 'text-white/75 hover:text-white'
-              }`}
-            >
-              {label}
-            </Link>
-          )
-        })}
-        <button
-          onClick={handleLogout}
-          className="text-white/70 hover:text-white text-sm transition"
-        >
+      <div className="flex items-center gap-4 text-sm">
+        {userName && (
+          <span className="text-white/80">
+            {userName}
+            <span className="text-white/50 text-xs ml-1">({userRole})</span>
+          </span>
+        )}
+        <button onClick={handleLogout} className="text-white/70 hover:text-white transition">
           로그아웃
         </button>
       </div>

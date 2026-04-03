@@ -51,6 +51,7 @@ export interface Complaint {
   ai_analysis: AiAnalysis | null
   assigned_staff_id: string | null
   assigned_staff?: Staff
+  created_by_staff_id: string | null
   final_response: string | null
   created_at: string
   updated_at: string
@@ -68,4 +69,5 @@ export interface CreateComplaintInput {
   title: string
   content: string
   counselor_name: string
+  created_by_staff_id?: string
 }
