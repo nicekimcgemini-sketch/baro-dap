@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Complaint } from '@/lib/types'
+import { Complaint, Priority, PRIORITY_EMOJI, PRIORITY_LABEL } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
 export default function ComplaintResponsePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [complaint, setComplaint] = useState<Complaint | null>(null)
   const [response, setResponse] = useState('')
+  const [priority, setPriority] = useState<Priority>(3)
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savingPriority, setSavingPriority] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
       const data: Complaint = await res.json()
       setComplaint(data)
       setResponse(data.final_response ?? '')
+      setPriority(data.priority ?? 3)
       setLoading(false)
     }
     init()
@@ -47,12 +50,20 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
       body: JSON.stringify({ complaint_id: params.id }),
     })
     const data = await res.json()
-    if (res.ok) {
-      setResponse(data.response)
-    } else {
-      alert('AI 생성 실패: ' + data.error)
-    }
+    if (res.ok) setResponse(data.response)
+    else alert('AI 생성 실패: ' + data.error)
     setGenerating(false)
+  }
+
+  const savePriority = async (newPriority: Priority) => {
+    setPriority(newPriority)
+    setSavingPriority(true)
+    await fetch(`/api/complaints/${params.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priority: newPriority }),
+    })
+    setSavingPriority(false)
   }
 
   const saveResponse = async () => {
@@ -104,6 +115,33 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 긴급도 수정 (관리자 전용) */}
+      <div className="bg-white rounded-2xl border border-spring-pink-border p-6 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-spring-text">긴급도 설정</h3>
+          {savingPriority && <span className="text-xs text-spring-text-light">저장 중...</span>}
+        </div>
+        <div className="flex gap-2">
+          {([1, 2, 3, 4, 5] as Priority[]).map(p => (
+            <button
+              key={p}
+              onClick={() => savePriority(p)}
+              title={PRIORITY_LABEL[p]}
+              className={`flex-1 py-2.5 rounded-xl text-2xl border-2 transition ${
+                priority === p
+                  ? 'border-spring-pink bg-spring-pink-light'
+                  : 'border-spring-pink-border bg-white hover:bg-spring-soft'
+              }`}
+            >
+              {PRIORITY_EMOJI[p]}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-spring-text-light text-center">
+          현재: {PRIORITY_EMOJI[priority]} {PRIORITY_LABEL[priority]}
+        </p>
       </div>
 
       {/* AI 답변 작성 */}
