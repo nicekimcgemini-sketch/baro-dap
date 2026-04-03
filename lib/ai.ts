@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { AiAnalysis, Priority } from './types'
+import { findRelatedFaqs } from './faq-data'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -33,11 +34,16 @@ async function generateWithRetry(prompt: string, retries = 2, delayMs = 15000): 
 }
 
 export async function analyzeComplaint(title: string, content: string): Promise<AiAnalysis> {
+  const relatedFaqs = findRelatedFaqs(title, content)
+  const faqContext = relatedFaqs.length > 0
+    ? `\n\n[관련 FAQ 참고]\n${relatedFaqs.map((f, i) => `${i + 1}. ${f.title}`).join('\n')}\n위 FAQ를 참고하여 답변의 정확도를 높이세요.`
+    : ''
+
   const prompt = `당신은 신한카드 고객 민원 대응 전문가입니다. 신한카드 고객이 접수한 민원을 분석하고 JSON 형식으로 답변해주세요.
 
-신한카드는 카드 발급, 한도, 결제, 포인트/혜택, 분실/도난, 부정사용, 앱/온라인 서비스 등 금융 서비스를 제공하는 카드사입니다.
+신한카드는 카드 발급, 한도, 결제, 포인트/혜택, 분실/도난, 부정사용, 앱/온라인 서비스, 민생회복 소비쿠폰 등 금융 서비스를 제공하는 카드사입니다.
 답변은 신한카드 직원이 고객에게 보내는 공식 답변 초안으로, 정중하고 신뢰감 있게 작성해야 합니다.
-금융 민원의 특성상 개인정보 보호, 금융소비자보호법 등을 준수하는 어조를 유지하세요.
+금융 민원의 특성상 개인정보 보호, 금융소비자보호법 등을 준수하는 어조를 유지하세요.${faqContext}
 
 민원 제목: ${title}
 민원 내용: ${content}
