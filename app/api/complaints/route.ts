@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { analyzeComplaint, findBestStaff } from '@/lib/claude'
+import { analyzeComplaint, findBestStaff } from '@/lib/ai'
 import { CreateComplaintInput } from '@/lib/types'
 
 export async function GET(req: NextRequest) {
@@ -28,15 +28,15 @@ export async function POST(req: NextRequest) {
   const supabase = createServerClient()
   const body: CreateComplaintInput = await req.json()
 
-  const { title, content, customer_name, customer_contact } = body
-  if (!title || !content || !customer_name || !customer_contact) {
+  const { title, content, counselor_name } = body
+  if (!title || !content || !counselor_name) {
     return NextResponse.json({ error: '모든 필드를 입력해주세요.' }, { status: 400 })
   }
 
   // 1. 민원 먼저 저장
   const { data: complaint, error: insertError } = await supabase
     .from('complaints')
-    .insert({ title, content, customer_name, customer_contact })
+    .insert({ title, content, customer_name: counselor_name, customer_contact: '' })
     .select()
     .single()
 

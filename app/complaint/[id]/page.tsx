@@ -51,15 +51,9 @@ export default async function ComplaintConfirmPage({ params }: { params: { id: s
             <p className="text-spring-text text-sm whitespace-pre-wrap">{complaint.content}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="text-xs text-spring-text-light block mb-1">접수자</span>
-              <p className="text-spring-text text-sm">{complaint.customer_name}</p>
-            </div>
-            <div>
-              <span className="text-xs text-spring-text-light block mb-1">연락처</span>
-              <p className="text-spring-text text-sm">{complaint.customer_contact}</p>
-            </div>
+          <div>
+            <span className="text-xs text-spring-text-light block mb-1">상담원명</span>
+            <p className="text-spring-text text-sm">{complaint.customer_name}</p>
           </div>
 
           {complaint.category && (

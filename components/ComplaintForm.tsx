@@ -7,40 +7,17 @@ import { formatDate } from '@/lib/utils'
 const INITIAL_FORM = {
   title: '',
   content: '',
-  customer_name: '',
-  customer_contact: '',
+  counselor_name: '',
 }
 
 export default function ComplaintForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState(INITIAL_FORM)
-  const [contactError, setContactError] = useState('')
   const [submitted, setSubmitted] = useState<Complaint | null>(null)
-
-  const validateContact = (value: string) => {
-    const phoneRegex = /^(01[016789])-?\d{3,4}-?\d{4}$/
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!phoneRegex.test(value) && !emailRegex.test(value)) {
-      return '올바른 전화번호(010-0000-0000) 또는 이메일 주소를 입력해 주세요.'
-    }
-    return ''
-  }
-
-  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setForm({ ...form, customer_contact: value })
-    if (value) setContactError(validateContact(value))
-    else setContactError('')
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const contactErr = validateContact(form.customer_contact)
-    if (contactErr) {
-      setContactError(contactErr)
-      return
-    }
     setLoading(true)
     setError('')
 
@@ -74,7 +51,6 @@ export default function ComplaintForm() {
     setSubmitted(null)
     setForm(INITIAL_FORM)
     setError('')
-    setContactError('')
   }
 
   const inputClass =
@@ -114,38 +90,19 @@ export default function ComplaintForm() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-spring-text mb-1">
-              성함 <span className="text-spring-pink">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="홍길동"
-              value={form.customer_name}
-              onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
-              className={inputClass}
-              disabled={!!submitted}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-spring-text mb-1">
-              연락처 <span className="text-spring-pink">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="010-1234-5678 또는 이메일"
-              value={form.customer_contact}
-              onChange={handleContactChange}
-              className={`${inputClass} ${contactError ? 'border-spring-pink focus:ring-spring-pink' : ''}`}
-              disabled={!!submitted}
-            />
-            {contactError && (
-              <p className="text-spring-pink text-xs mt-1">{contactError}</p>
-            )}
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-spring-text mb-1">
+            상담원명 <span className="text-spring-pink">*</span>
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="상담원 이름을 입력해 주세요"
+            value={form.counselor_name}
+            onChange={(e) => setForm({ ...form, counselor_name: e.target.value })}
+            className={inputClass}
+            disabled={!!submitted}
+          />
         </div>
 
         {error && <p className="text-spring-pink text-sm">{error}</p>}
@@ -199,13 +156,8 @@ export default function ComplaintForm() {
             )}
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-spring-text-light">접수자</span>
+              <span className="text-xs text-spring-text-light">상담원명</span>
               <span className="text-spring-text text-xs">{submitted.customer_name}</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-spring-text-light">연락처</span>
-              <span className="text-spring-text text-xs">{submitted.customer_contact}</span>
             </div>
 
             <div className="pt-2 border-t border-spring-pink-light">

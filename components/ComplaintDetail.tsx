@@ -87,15 +87,9 @@ export default function ComplaintDetail({ complaint }: Props) {
               <span className="text-spring-text-light block mb-1">민원 내용</span>
               <p className="text-spring-text whitespace-pre-wrap leading-relaxed">{complaint.content}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-spring-pink-light">
-              <div>
-                <span className="text-spring-text-light block mb-0.5">접수자</span>
-                <p className="text-spring-text">{complaint.customer_name}</p>
-              </div>
-              <div>
-                <span className="text-spring-text-light block mb-0.5">연락처</span>
-                <p className="text-spring-text">{complaint.customer_contact}</p>
-              </div>
+            <div className="pt-3 border-t border-spring-pink-light">
+              <span className="text-spring-text-light block mb-0.5">상담원명</span>
+              <p className="text-spring-text">{complaint.customer_name}</p>
             </div>
             <div className="pt-3 border-t border-spring-pink-light">
               <span className="text-spring-text-light block mb-0.5">접수일시</span>

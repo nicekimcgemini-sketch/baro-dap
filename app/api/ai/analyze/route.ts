@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { analyzeComplaint, findBestStaff } from '@/lib/claude'
+import { analyzeComplaint, findBestStaff } from '@/lib/ai'
 
 // 특정 민원 재분석 (priority가 null인 경우 수동 트리거)
 export async function POST(req: NextRequest) {

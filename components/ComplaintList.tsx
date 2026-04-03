@@ -26,7 +26,7 @@ export default function ComplaintList({ complaints }: Props) {
             <th className="px-4 py-3 text-left text-spring-text font-semibold w-12">긴급도</th>
             <th className="px-4 py-3 text-left text-spring-text font-semibold">제목</th>
             <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">분류</th>
-            <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">접수자</th>
+            <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">상담원명</th>
             <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">상태</th>
             <th className="px-4 py-3 text-left text-spring-text font-semibold w-32">접수일시</th>
           </tr>

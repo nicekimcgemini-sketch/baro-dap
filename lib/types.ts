@@ -67,6 +67,5 @@ export interface AiAnalysis {
 export interface CreateComplaintInput {
   title: string
   content: string
-  customer_name: string
-  customer_contact: string
+  counselor_name: string
 }
