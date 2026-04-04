@@ -9,7 +9,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="bg-gray-50 min-h-screen">{children}</body>
+      <head>
+        <link
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+          rel="stylesheet"
+        />
+        <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web" />
+      </head>
+      <body className="feather-bg min-h-screen text-spring-text">{children}</body>
     </html>
   )
 }
