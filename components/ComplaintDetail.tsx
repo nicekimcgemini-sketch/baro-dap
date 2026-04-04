@@ -223,6 +223,30 @@ export default function ComplaintDetail({ complaint }: Props) {
                 </div>
               </div>
 
+              {complaint.ai_analysis?.is_legal_sensitive && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-base">⚖️</span>
+                    <span className="text-xs font-semibold text-amber-700">법령 민감 민원</span>
+                  </div>
+                  {complaint.ai_analysis.legal_topics && complaint.ai_analysis.legal_topics.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {complaint.ai_analysis.legal_topics.map((topic, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 bg-white border border-amber-200 rounded-full text-xs text-amber-800 font-medium"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-amber-600 mt-2">
+                    이 민원은 관련 법령상 소비자 권리와 직결될 수 있습니다. 답변 시 법령 기준을 준수하세요.
+                  </p>
+                </div>
+              )}
+
               {complaint.ai_analysis && (
                 <div>
                   <span className="text-spring-emerald block mb-0.5 text-xs font-medium">분석 이유</span>

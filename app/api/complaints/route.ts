@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServerClient()
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
+  const priority = searchParams.get('priority')
 
   let query = supabase
     .from('complaints')
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
 
   if (status) query = query.eq('status', status)
+  if (priority) query = query.eq('priority', parseInt(priority))
 
   const { data, error } = await query
 

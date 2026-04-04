@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import { analyzeComplaint, findBestStaff } from '@/lib/ai'
+import { findSimilarResponses } from '@/lib/complaint-history'
 
 // 특정 민원 재분석 (priority가 null인 경우 수동 트리거)
 export async function POST(req: NextRequest) {
@@ -21,9 +22,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '민원을 찾을 수 없습니다.' }, { status: 404 })
   }
 
+  const similarResponses = await findSimilarResponses(supabase, complaint.title, complaint.content)
+
   let analysis
   try {
-    analysis = await analyzeComplaint(complaint.title, complaint.content)
+    analysis = await analyzeComplaint(complaint.title, complaint.content, similarResponses)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     if (message === 'API_RATE_LIMIT') {

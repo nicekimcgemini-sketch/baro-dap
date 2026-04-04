@@ -63,6 +63,8 @@ export interface AiAnalysis {
   department: string
   ai_response: string
   reasoning: string
+  is_legal_sensitive: boolean
+  legal_topics: string[]
 }
 
 export interface CreateComplaintInput {

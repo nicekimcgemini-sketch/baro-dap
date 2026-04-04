@@ -33,6 +33,30 @@ export default function DashboardPage() {
   const [editForm, setEditForm] = useState({ title: '', content: '', counselor_name: '' })
   const [editSaving, setEditSaving] = useState(false)
 
+  // 대시보드 필터
+  type FilterDef =
+    | { type: 'status'; value: string; label: string }
+    | { type: 'staff'; value: string; label: string }
+    | { type: 'category'; value: string; label: string }
+    | { type: 'priority'; value: Priority; label: string }
+    | { type: 'date'; value: string; label: string }
+    | { type: 'answered'; label: string }
+  const [activeFilters, setActiveFiltersRaw] = useState<FilterDef[]>([])
+  const toggleFilter = (f: FilterDef) => {
+    setActiveFiltersRaw(prev => {
+      const exists = prev.some(p => p.type === f.type && ('value' in p && 'value' in f ? p.value === f.value : true))
+      return exists ? prev.filter(p => !(p.type === f.type && ('value' in p && 'value' in f ? p.value === f.value : true))) : [...prev, f]
+    })
+    setCurrentPage(1)
+  }
+  const removeFilter = (f: FilterDef) => {
+    setActiveFiltersRaw(prev => prev.filter(p => !(p.type === f.type && ('value' in p && 'value' in f ? p.value === f.value : true))))
+    setCurrentPage(1)
+  }
+  const clearFilters = () => { setActiveFiltersRaw([]); setCurrentPage(1) }
+  const isFilterActive = (f: FilterDef) =>
+    activeFilters.some(p => p.type === f.type && ('value' in p && 'value' in f ? p.value === f.value : true))
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -191,13 +215,30 @@ export default function DashboardPage() {
   }))
   const maxDateCount = Math.max(...byDate.map(d => d.count), 1)
 
-  const statCards = [
-    { label: '총 문의', value: total, color: 'text-spring-text' },
-    { label: '미처리', value: pending, color: 'text-yellow-500' },
-    { label: '처리중', value: inProgress, color: 'text-spring-pink' },
-    { label: '완료', value: resolved, color: 'text-spring-emerald' },
-    { label: '답변완료율', value: `${answerRate}%`, color: 'text-blue-500' },
-  ]
+  // 필터 적용 (AND 조건 - 같은 type 내에서는 OR, 다른 type 간에는 AND)
+  const filteredComplaints = activeFilters.length === 0 ? complaints : complaints.filter(c => {
+    const byType = activeFilters.reduce((acc, f) => {
+      acc[f.type] = acc[f.type] ?? []
+      acc[f.type].push(f)
+      return acc
+    }, {} as Record<string, FilterDef[]>)
+
+    return Object.values(byType).every(group =>
+      group.some(f => {
+        switch (f.type) {
+          case 'status':
+            if (f.value === 'resolved') return c.status === 'resolved' || c.status === 'closed'
+            return c.status === f.value
+          case 'staff': return c.customer_name === f.value
+          case 'category': return f.value === '미분류' ? !c.category : c.category === f.value
+          case 'priority': return c.priority === f.value
+          case 'date': return c.created_at.slice(0, 10) === f.value
+          case 'answered': return !!c.final_response
+          default: return true
+        }
+      })
+    )
+  })
 
   const statCardDefs = [
     {
@@ -205,40 +246,40 @@ export default function DashboardPage() {
       valueClass: 'text-spring-text',
       borderClass: 'from-spring-emerald via-spring-blue to-white/20',
       iconBg: 'bg-spring-text/5 group-hover:bg-spring-text',
-      icon: '📋',
-      trend: null,
+      icon: '📋', trend: null,
+      filter: null as FilterDef | null,
     },
     {
       label: '미처리', sublabel: 'Pending', value: pending,
       valueClass: 'text-yellow-500',
       borderClass: 'from-yellow-400 via-yellow-300 to-white/20',
       iconBg: 'bg-yellow-50 group-hover:bg-yellow-400',
-      icon: '⚠️',
-      trend: null,
+      icon: '⚠️', trend: null,
+      filter: { type: 'status', value: 'pending', label: '미처리' } as FilterDef,
     },
     {
       label: '처리중', sublabel: 'Active', value: inProgress,
       valueClass: 'text-priority-high',
       borderClass: 'from-priority-high via-orange-300 to-white/20',
       iconBg: 'bg-orange-50 group-hover:bg-priority-high',
-      icon: '🔄',
-      trend: null,
+      icon: '🔄', trend: null,
+      filter: { type: 'status', value: 'in_progress', label: '처리중' } as FilterDef,
     },
     {
       label: '완료', sublabel: 'Done', value: resolved,
       valueClass: 'text-spring-emerald',
       borderClass: 'from-spring-emerald via-emerald-300 to-white/20',
       iconBg: 'bg-spring-emerald/10 group-hover:bg-spring-emerald',
-      icon: '✅',
-      trend: null,
+      icon: '✅', trend: null,
+      filter: { type: 'status', value: 'resolved', label: '완료' } as FilterDef,
     },
     {
       label: '답변완료율', sublabel: 'Resolution', value: `${answerRate}%`,
       valueClass: 'text-spring-blue',
       borderClass: 'from-spring-blue via-spring-emerald to-white/20',
       iconBg: 'bg-blue-50 group-hover:bg-spring-blue',
-      icon: '📈',
-      trend: answerRate,
+      icon: '📈', trend: answerRate,
+      filter: null as FilterDef | null,
     },
   ]
 
@@ -250,9 +291,15 @@ export default function DashboardPage() {
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-5 gap-4 relative z-10">
-        {statCardDefs.map(({ label, sublabel, value, valueClass, borderClass, iconBg, icon, trend }) => (
-          <div key={label} className={`p-[1.5px] rounded-2xl bg-gradient-to-br ${borderClass} shadow-feather group hover:-translate-y-1.5 transition-all duration-300`}>
-            <div className="bg-white/95 h-full rounded-[14px] p-5 flex flex-col justify-between relative overflow-hidden">
+        {statCardDefs.map(({ label, sublabel, value, valueClass, borderClass, iconBg, icon, trend, filter }) => {
+          const isActive = filter !== null && isFilterActive(filter)
+          return (
+          <div
+            key={label}
+            onClick={() => filter && toggleFilter(filter)}
+            className={`p-[1.5px] rounded-2xl bg-gradient-to-br ${borderClass} shadow-feather group hover:-translate-y-1.5 transition-all duration-300 ${filter ? 'cursor-pointer' : ''} ${isActive ? 'ring-2 ring-offset-1 ring-spring-emerald scale-[1.03]' : ''}`}
+          >
+            <div className={`h-full rounded-[14px] p-5 flex flex-col justify-between relative overflow-hidden transition-colors ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
               <div className="flex justify-between items-start">
                 <p className="text-xs font-bold text-spring-text/60 uppercase tracking-wide">
                   {label} <span className="lowercase normal-case font-medium">({sublabel})</span>
@@ -267,9 +314,12 @@ export default function DashboardPage() {
                   <div className="bg-gradient-to-r from-spring-blue to-spring-emerald h-full rounded-full" style={{ width: `${trend}%` }} />
                 </div>
               )}
+              {isActive && (
+                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-spring-emerald animate-pulse" />
+              )}
             </div>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* 차트 영역 */}
@@ -294,9 +344,14 @@ export default function DashboardPage() {
                   'bg-gradient-to-r from-spring-orange to-[#FFC436]',
                   'bg-gradient-to-r from-purple-400 to-purple-300',
                 ]
+                const isActive = isFilterActive({ type: 'staff', value: name, label: name })
                 return (
-                  <div key={name} className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-spring-text w-16 shrink-0 truncate">{name}</span>
+                  <div
+                    key={name}
+                    onClick={() => toggleFilter({ type: 'staff', value: name, label: name })}
+                    className={`flex items-center gap-3 cursor-pointer rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-spring-emerald/10' : 'hover:bg-spring-bg'}`}
+                  >
+                    <span className={`text-xs font-bold w-16 shrink-0 truncate ${isActive ? 'text-spring-emerald' : 'text-spring-text'}`}>{name}</span>
                     <div className="flex-1 bg-spring-bg h-3 rounded-full overflow-hidden">
                       <div
                         className={`${barColors[i % barColors.length]} h-full rounded-full`}
@@ -319,18 +374,24 @@ export default function DashboardPage() {
             </h3>
           </div>
           <div className="flex-1 flex items-end justify-between gap-2 mt-4 pb-3 border-b-2 border-spring-bg">
-            {byDate.map(({ date, count }, i) => {
+            {byDate.map(({ date, count }) => {
+              const fullDate = last7.find(d => d.slice(5) === date) ?? date
               const isMax = count === maxDateCount && count > 0
+              const isActive = isFilterActive({ type: 'date', value: fullDate, label: date })
               return (
-                <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative cursor-pointer">
+                <div
+                  key={date}
+                  onClick={() => count > 0 && toggleFilter({ type: 'date', value: fullDate, label: date })}
+                  className={`flex-1 flex flex-col items-center gap-1 group relative ${count > 0 ? 'cursor-pointer' : ''} ${isActive ? 'rounded-lg bg-spring-emerald/10' : ''}`}
+                >
                   <span className="text-[10px] text-spring-text-light font-bold">{count > 0 ? count : ''}</span>
                   <div className="w-full flex items-end" style={{ height: '60px' }}>
                     <div
-                      className={`w-full rounded-t-lg transition-all ${isMax ? 'bg-gradient-to-t from-spring-pink via-[#FF6699] to-[#FF2A7A] shadow-[0_-4px_12px_rgba(255,42,122,0.3)]' : 'bg-spring-bg group-hover:bg-spring-emerald/30'}`}
+                      className={`w-full rounded-t-lg transition-all ${isActive ? 'bg-spring-emerald shadow-[0_-4px_12px_rgba(0,217,165,0.4)]' : isMax ? 'bg-gradient-to-t from-spring-pink via-[#FF6699] to-[#FF2A7A] shadow-[0_-4px_12px_rgba(255,42,122,0.3)]' : 'bg-spring-bg group-hover:bg-spring-emerald/30'}`}
                       style={{ height: `${(count / maxDateCount) * 100}%`, minHeight: count > 0 ? '4px' : '0' }}
                     />
                   </div>
-                  <span className="text-[10px] text-spring-text-light font-bold">{date}</span>
+                  <span className={`text-[10px] font-bold ${isActive ? 'text-spring-emerald' : 'text-spring-text-light'}`}>{date}</span>
                 </div>
               )
             })}
@@ -352,12 +413,17 @@ export default function DashboardPage() {
                 2: 'bg-gradient-to-r from-emerald-300 to-priority-low',
                 1: 'bg-gradient-to-r from-slate-300 to-priority-lowest',
               }
+              const isActive = isFilterActive({ type: 'priority', value: p, label: `긴급도 ${PRIORITY_EMOJI[p]}` })
               return (
-                <div key={p} className="flex items-center gap-3 group">
+                <div
+                  key={p}
+                  onClick={() => count > 0 && toggleFilter({ type: 'priority', value: p, label: `긴급도 ${PRIORITY_EMOJI[p]}` })}
+                  className={`flex items-center gap-3 group rounded-lg px-1 py-0.5 transition-colors ${count > 0 ? 'cursor-pointer' : ''} ${isActive ? 'bg-spring-emerald/10' : 'hover:bg-spring-bg'}`}
+                >
                   <span className="text-xl w-6 text-center group-hover:scale-125 transition-transform origin-center">{PRIORITY_EMOJI[p]}</span>
                   <div className="flex-1 bg-spring-bg h-2.5 rounded-full overflow-hidden">
                     <div
-                      className={`${priorityBarColors[p]} h-full rounded-full`}
+                      className={`${isActive ? 'bg-spring-emerald' : priorityBarColors[p]} h-full rounded-full`}
                       style={{ width: `${maxPriorityCount > 0 ? (count / maxPriorityCount) * 100 : 0}%` }}
                     />
                   </div>
@@ -410,12 +476,17 @@ export default function DashboardPage() {
                     'bg-gradient-to-r from-purple-400 to-purple-300',
                     'bg-gray-300',
                   ]
+                  const isActive = isFilterActive({ type: 'category', value: cat, label: cat })
                   return (
-                    <div key={cat} className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-spring-text w-20 shrink-0 truncate">{cat}</span>
+                    <div
+                      key={cat}
+                      onClick={() => toggleFilter({ type: 'category', value: cat, label: cat })}
+                      className={`flex items-center gap-2 cursor-pointer rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-spring-emerald/10' : 'hover:bg-spring-bg'}`}
+                    >
+                      <span className={`text-xs font-bold w-20 shrink-0 truncate ${isActive ? 'text-spring-emerald' : 'text-spring-text'}`}>{cat}</span>
                       <div className="flex-1 bg-spring-bg h-2 rounded-full overflow-hidden">
                         <div
-                          className={`${barColors[i % barColors.length]} h-full rounded-full`}
+                          className={`${isActive ? 'bg-spring-emerald' : barColors[i % barColors.length]} h-full rounded-full`}
                           style={{ width: `${(count / maxCategoryCount) * 100}%` }}
                         />
                       </div>
@@ -429,11 +500,32 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* 활성 필터 표시 */}
+      {activeFilters.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap relative z-10">
+          <span className="text-xs text-spring-text-light">필터:</span>
+          {activeFilters.map((f, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-spring-emerald text-white shadow-sm">
+              {f.label}
+              <button onClick={() => removeFilter(f)} className="ml-0.5 hover:opacity-70 transition-opacity">✕</button>
+            </span>
+          ))}
+          {activeFilters.length > 1 && (
+            <button onClick={clearFilters} className="text-xs text-spring-text-light hover:text-spring-pink transition-colors underline">
+              전체 해제
+            </button>
+          )}
+          <span className="text-xs text-spring-text-light">{filteredComplaints.length}건</span>
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className="flex items-center justify-between relative z-10">
         <h2 className="text-xl font-black text-spring-text flex items-center gap-2">
           <span className="text-spring-blue">📋</span> 문의 목록
-          <span className="text-sm font-medium text-spring-text-light ml-1">총 {complaints.length}건</span>
+          <span className="text-sm font-medium text-spring-text-light ml-1">
+            {activeFilters.length > 0 ? `${filteredComplaints.length}건 / 전체 ${complaints.length}건` : `총 ${complaints.length}건`}
+          </span>
         </h2>
         <div className="flex items-center gap-3">
           {staff?.role === 'counselor' && (
@@ -543,12 +635,11 @@ export default function DashboardPage() {
 
       {/* 문의 목록 */}
       {(() => {
-        const totalPages = Math.ceil(complaints.length / PAGE_SIZE)
-        const pagedComplaints = complaints.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+        const pagedComplaints = filteredComplaints.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
         return (
       <div className="space-y-3 relative z-10">
       <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather overflow-hidden">
-        {complaints.length === 0 ? (
+        {filteredComplaints.length === 0 ? (
           <div className="text-center py-16 text-spring-text-light">
             <p className="text-5xl mb-3">🦜</p>
             <p className="font-semibold">등록된 문의가 없습니다.</p>
@@ -717,7 +808,7 @@ export default function DashboardPage() {
       </div>
 
       <Pagination
-        total={complaints.length}
+        total={filteredComplaints.length}
         currentPage={currentPage}
         pageSize={PAGE_SIZE}
         onPageChange={setCurrentPage}

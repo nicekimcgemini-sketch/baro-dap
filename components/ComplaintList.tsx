@@ -38,9 +38,19 @@ export default function ComplaintList({ complaints }: Props) {
                 {c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}
               </td>
               <td className="px-4 py-3">
-                <Link href={`/counsel/${c.id}`} className="text-spring-text hover:text-spring-pink font-medium transition">
-                  {c.title}
-                </Link>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link href={`/counsel/${c.id}`} className="text-spring-text hover:text-spring-pink font-medium transition">
+                    {c.title}
+                  </Link>
+                  {c.ai_analysis?.is_legal_sensitive && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 shrink-0"
+                      title={c.ai_analysis.legal_topics?.join(', ')}
+                    >
+                      ⚖️ 법령 관련
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-3">
                 {c.category ? (
