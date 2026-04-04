@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Staff, StaffRole } from '@/lib/types'
+import Pagination from '@/components/Pagination'
 
 interface Props {
   initialStaff: Staff[]
@@ -21,6 +22,10 @@ export default function StaffTable({ initialStaff }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  const pagedStaff = staff.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const addStaff = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +47,7 @@ export default function StaffTable({ initialStaff }: Props) {
     } else {
       const newStaff = await res.json()
       setStaff([newStaff, ...staff])
+      setCurrentPage(1)
       setForm(emptyForm)
       setShowForm(false)
     }
@@ -131,7 +137,7 @@ export default function StaffTable({ initialStaff }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-spring-pink-light">
-            {staff.map((s) => (
+            {pagedStaff.map((s) => (
               <tr key={s.id} className={`${!s.is_active ? 'opacity-50' : ''} hover:bg-spring-emerald-light transition-colors`}>
                 <td className="px-4 py-3 font-medium text-spring-text">{s.name}</td>
                 <td className="px-4 py-3 text-spring-text-light">{s.department}</td>
@@ -183,6 +189,14 @@ export default function StaffTable({ initialStaff }: Props) {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        total={staff.length}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
     </div>
   )
 }

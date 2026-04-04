@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : String(err)
     if (message === 'API_RATE_LIMIT') {
       return NextResponse.json(
-        { error: '잠시 후 다시 시도해 주세요. (Gemini 무료 플랜은 분당 15회 요청 제한이 있습니다)' },
+        { error: '잠시 후 다시 시도해 주세요. (AI 서비스 요청 한도를 초과했습니다)' },
         { status: 429 }
       )
     }

@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Complaint, Staff, STATUS_LABEL, Priority, PRIORITY_EMOJI } from '@/lib/types'
 import { formatDateShort } from '@/lib/utils'
+import Pagination from '@/components/Pagination'
 
 const inputClass =
   'w-full border border-spring-pink-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald bg-spring-bg'
@@ -21,6 +21,12 @@ export default function DashboardPage() {
   const [form, setForm] = useState({ title: '', content: '', counselor_name: '' })
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+
+  // 선택된 문의 (하단바)
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [PAGE_SIZE, setPAGE_SIZE] = useState(10)
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 인라인 수정
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -48,9 +54,12 @@ export default function DashboardPage() {
     init()
   }, [router])
 
-  const loadComplaints = async () => {
+  const loadComplaints = async (resetPage = false) => {
     const res = await fetch('/api/complaints')
-    if (res.ok) setComplaints(await res.json())
+    if (res.ok) {
+      setComplaints(await res.json())
+      if (resetPage) setCurrentPage(1)
+    }
   }
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -66,12 +75,28 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error((await res.json()).error)
       setShowForm(false)
       setForm(f => ({ ...f, title: '', content: '' }))
-      await loadComplaints()
+      await loadComplaints(true)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : '오류가 발생했습니다.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleRowClick = (c: Complaint) => {
+    if (clickTimerRef.current) return
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null
+      setSelectedComplaint(prev => prev?.id === c.id ? null : c)
+    }, 220)
+  }
+
+  const handleRowDoubleClick = (c: Complaint) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+    router.push(`/dashboard/${c.id}`)
   }
 
   const startEdit = (c: Complaint) => {
@@ -98,13 +123,13 @@ export default function DashboardPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('삭제하시겠습니까?')) return
     await fetch(`/api/complaints/${id}`, { method: 'DELETE' })
-    await loadComplaints()
+    await loadComplaints(true)
   }
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <p className="text-spring-text-light">로딩 중...</p>
+        <p className="text-spring-text-light text-lg font-semibold">🦜 로딩 중...</p>
       </div>
     )
   }
@@ -117,7 +142,7 @@ export default function DashboardPage() {
   const answered = complaints.filter(c => c.final_response).length
   const answerRate = total > 0 ? Math.round((answered / total) * 100) : 0
 
-  // 상담원별 집계
+  // 상담원별 집계 (요청 건수 top5)
   const byStaff = complaints.reduce((acc, c) => {
     const name = c.customer_name || '미입력'
     acc[name] = (acc[name] ?? 0) + 1
@@ -132,7 +157,12 @@ export default function DashboardPage() {
     acc[cat] = (acc[cat] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
-  const categoryStats = Object.entries(byCategory).sort((a, b) => b[1] - a[1])
+  const catOrder = (name: string) => name === '미분류' ? 2 : name === '기타' ? 1 : 0
+  const categoryStats = Object.entries(byCategory).sort(([aName, aCount], [bName, bCount]) => {
+    const diff = catOrder(aName) - catOrder(bName)
+    if (diff !== 0) return diff
+    return bCount - aCount
+  })
   const maxCategoryCount = categoryStats[0]?.[1] ?? 1
 
   const categoryColors = [
@@ -169,226 +199,383 @@ export default function DashboardPage() {
     { label: '답변완료율', value: `${answerRate}%`, color: 'text-blue-500' },
   ]
 
+  const statCardDefs = [
+    {
+      label: '총 문의', sublabel: 'Total', value: total,
+      valueClass: 'text-spring-text',
+      borderClass: 'from-spring-emerald via-spring-blue to-white/20',
+      iconBg: 'bg-spring-text/5 group-hover:bg-spring-text',
+      icon: '📋',
+      trend: null,
+    },
+    {
+      label: '미처리', sublabel: 'Pending', value: pending,
+      valueClass: 'text-yellow-500',
+      borderClass: 'from-yellow-400 via-yellow-300 to-white/20',
+      iconBg: 'bg-yellow-50 group-hover:bg-yellow-400',
+      icon: '⚠️',
+      trend: null,
+    },
+    {
+      label: '처리중', sublabel: 'Active', value: inProgress,
+      valueClass: 'text-priority-high',
+      borderClass: 'from-priority-high via-orange-300 to-white/20',
+      iconBg: 'bg-orange-50 group-hover:bg-priority-high',
+      icon: '🔄',
+      trend: null,
+    },
+    {
+      label: '완료', sublabel: 'Done', value: resolved,
+      valueClass: 'text-spring-emerald',
+      borderClass: 'from-spring-emerald via-emerald-300 to-white/20',
+      iconBg: 'bg-spring-emerald/10 group-hover:bg-spring-emerald',
+      icon: '✅',
+      trend: null,
+    },
+    {
+      label: '답변완료율', sublabel: 'Resolution', value: `${answerRate}%`,
+      valueClass: 'text-spring-blue',
+      borderClass: 'from-spring-blue via-spring-emerald to-white/20',
+      iconBg: 'bg-blue-50 group-hover:bg-spring-blue',
+      icon: '📈',
+      trend: answerRate,
+    },
+  ]
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* 배경 글로우 */}
+      <div className="fixed top-0 left-0 w-[600px] h-[500px] bg-gradient-to-br from-spring-emerald/15 via-spring-blue/10 to-transparent blur-[120px] rounded-full pointer-events-none -translate-x-1/3 -translate-y-1/3 z-0" />
+      <div className="fixed top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-spring-pink/10 to-transparent blur-[100px] rounded-full pointer-events-none translate-x-1/4 -translate-y-1/4 z-0" />
+
       {/* 통계 카드 */}
-      <div className="grid grid-cols-5 gap-3">
-        {statCards.map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-2xl border border-spring-pink-border p-4 shadow-sm text-center">
-            <p className="text-xs text-spring-text-light mb-1">{label}</p>
-            <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      <div className="grid grid-cols-5 gap-4 relative z-10">
+        {statCardDefs.map(({ label, sublabel, value, valueClass, borderClass, iconBg, icon, trend }) => (
+          <div key={label} className={`p-[1.5px] rounded-2xl bg-gradient-to-br ${borderClass} shadow-feather group hover:-translate-y-1.5 transition-all duration-300`}>
+            <div className="bg-white/95 h-full rounded-[14px] p-5 flex flex-col justify-between relative overflow-hidden">
+              <div className="flex justify-between items-start">
+                <p className="text-xs font-bold text-spring-text/60 uppercase tracking-wide">
+                  {label} <span className="lowercase normal-case font-medium">({sublabel})</span>
+                </p>
+                <div className={`p-2 rounded-xl ${iconBg} transition-colors text-base`}>{icon}</div>
+              </div>
+              <div className="mt-4 flex items-end gap-2">
+                <h3 className={`text-4xl font-black tabular-nums tracking-tighter ${valueClass}`}>{value}</h3>
+              </div>
+              {trend !== null && (
+                <div className="mt-2 w-full bg-spring-bg h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-spring-blue to-spring-emerald h-full rounded-full" style={{ width: `${trend}%` }} />
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
       {/* 차트 영역 */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-5 relative z-10">
         {/* 상담원별 문의 현황 */}
-        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-          <h3 className="font-semibold text-spring-text text-sm mb-4">상담원별 문의 현황</h3>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px] relative overflow-hidden">
+          <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
+            <span className="text-[160px]">👥</span>
+          </div>
+          <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
+            <span className="text-spring-emerald">🎯</span> 요청 Top 5
+          </h3>
           {staffStats.length === 0 ? (
             <p className="text-spring-text-light text-sm text-center py-4">데이터 없음</p>
           ) : (
-            <div className="space-y-3">
-              {staffStats.map(([name, count]) => (
-                <div key={name} className="flex items-center gap-3">
-                  <span className="text-xs text-spring-text w-16 shrink-0 truncate">{name}</span>
-                  <div className="flex-1 bg-spring-pink-light rounded-full h-2">
-                    <div
-                      className="spring-gradient h-2 rounded-full transition-all"
-                      style={{ width: `${(count / maxStaffCount) * 100}%` }}
-                    />
+            <div className="space-y-4 flex-1 flex flex-col justify-center">
+              {staffStats.map(([name, count], i) => {
+                const barColors = [
+                  'bg-gradient-to-r from-spring-emerald to-[#1EE3B9]',
+                  'bg-gradient-to-r from-spring-pink to-[#FF6699]',
+                  'bg-gradient-to-r from-spring-blue to-[#4DD6FF]',
+                  'bg-gradient-to-r from-spring-orange to-[#FFC436]',
+                  'bg-gradient-to-r from-purple-400 to-purple-300',
+                ]
+                return (
+                  <div key={name} className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-spring-text w-16 shrink-0 truncate">{name}</span>
+                    <div className="flex-1 bg-spring-bg h-3 rounded-full overflow-hidden">
+                      <div
+                        className={`${barColors[i % barColors.length]} h-full rounded-full`}
+                        style={{ width: `${(count / maxStaffCount) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-black text-spring-text bg-spring-soft px-2 py-0.5 rounded w-6 text-right shrink-0">{count}</span>
                   </div>
-                  <span className="text-xs text-spring-text w-5 text-right shrink-0">{count}</span>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
 
-        {/* 일별 접수 추이 (최근 7일) */}
-        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-          <h3 className="font-semibold text-spring-text text-sm mb-4">일별 접수 현황 (최근 7일)</h3>
-          <div className="flex items-end justify-between gap-1 h-24">
-            {byDate.map(({ date, count }) => (
-              <div key={date} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs text-spring-text-light">{count > 0 ? count : ''}</span>
-                <div className="w-full flex items-end" style={{ height: '60px' }}>
-                  <div
-                    className="w-full spring-gradient rounded-t-md transition-all"
-                    style={{ height: `${(count / maxDateCount) * 100}%`, minHeight: count > 0 ? '4px' : '0' }}
-                  />
+        {/* 일별 접수 추이 */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px]">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-extrabold text-spring-text text-sm flex items-center gap-2">
+              <span className="text-spring-pink">📊</span> 일별 접수 (7일)
+            </h3>
+          </div>
+          <div className="flex-1 flex items-end justify-between gap-2 mt-4 pb-3 border-b-2 border-spring-bg">
+            {byDate.map(({ date, count }, i) => {
+              const isMax = count === maxDateCount && count > 0
+              return (
+                <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative cursor-pointer">
+                  <span className="text-[10px] text-spring-text-light font-bold">{count > 0 ? count : ''}</span>
+                  <div className="w-full flex items-end" style={{ height: '60px' }}>
+                    <div
+                      className={`w-full rounded-t-lg transition-all ${isMax ? 'bg-gradient-to-t from-spring-pink via-[#FF6699] to-[#FF2A7A] shadow-[0_-4px_12px_rgba(255,42,122,0.3)]' : 'bg-spring-bg group-hover:bg-spring-emerald/30'}`}
+                      style={{ height: `${(count / maxDateCount) * 100}%`, minHeight: count > 0 ? '4px' : '0' }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-spring-text-light font-bold">{date}</span>
                 </div>
-                <span className="text-xs text-spring-text-light">{date}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
         {/* 긴급도별 현황 */}
-        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-          <h3 className="font-semibold text-spring-text text-sm mb-4">긴급도별 현황</h3>
-          <div className="space-y-3">
-            {priorityStats.map(({ p, count }) => (
-              <div key={p} className="flex items-center gap-2">
-                <span className="text-base w-5 shrink-0">{PRIORITY_EMOJI[p]}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-2">
-                  <div
-                    className="spring-gradient h-2 rounded-full transition-all"
-                    style={{ width: `${(count / maxPriorityCount) * 100}%` }}
-                  />
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px]">
+          <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
+            <span className="text-priority-high">🔥</span> 긴급도 분포
+          </h3>
+          <div className="flex-1 flex flex-col justify-between">
+            {([5, 4, 3, 2, 1] as Priority[]).map((p) => {
+              const count = complaints.filter(c => c.priority === p).length
+              const priorityBarColors: Record<number, string> = {
+                5: 'bg-gradient-to-r from-rose-500 to-priority-critical shadow-[0_0_8px_rgba(244,63,94,0.4)]',
+                4: 'bg-gradient-to-r from-orange-400 to-priority-high shadow-[0_0_8px_rgba(249,115,22,0.3)]',
+                3: 'bg-gradient-to-r from-cyan-400 to-priority-medium',
+                2: 'bg-gradient-to-r from-emerald-300 to-priority-low',
+                1: 'bg-gradient-to-r from-slate-300 to-priority-lowest',
+              }
+              return (
+                <div key={p} className="flex items-center gap-3 group">
+                  <span className="text-xl w-6 text-center group-hover:scale-125 transition-transform origin-center">{PRIORITY_EMOJI[p]}</span>
+                  <div className="flex-1 bg-spring-bg h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className={`${priorityBarColors[p]} h-full rounded-full`}
+                      style={{ width: `${maxPriorityCount > 0 ? (count / maxPriorityCount) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="font-black text-xs w-5 text-right shrink-0 text-spring-text/80">{count}</span>
                 </div>
-                <span className="text-xs text-spring-text w-4 text-right shrink-0">{count}</span>
-              </div>
-            ))}
+              )
+            })}
             {unsetCount > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-base w-5 shrink-0">⏳</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-2">
-                  <div
-                    className="bg-gray-300 h-2 rounded-full"
-                    style={{ width: `${(unsetCount / maxPriorityCount) * 100}%` }}
-                  />
+              <div className="flex items-center gap-3">
+                <span className="text-xl w-6 text-center">⏳</span>
+                <div className="flex-1 bg-spring-bg h-2.5 rounded-full overflow-hidden">
+                  <div className="bg-gray-300 h-full rounded-full" style={{ width: `${(unsetCount / maxPriorityCount) * 100}%` }} />
                 </div>
-                <span className="text-xs text-spring-text w-4 text-right shrink-0">{unsetCount}</span>
+                <span className="font-black text-xs w-5 text-right shrink-0 text-spring-text/60">{unsetCount}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* 카테고리별 현황 */}
-        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-          <h3 className="font-semibold text-spring-text text-sm mb-4">카테고리별 현황</h3>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px]">
+          <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
+            <span className="text-spring-orange">🗂️</span> 카테고리별
+          </h3>
           {categoryStats.length === 0 ? (
             <p className="text-spring-text-light text-sm text-center py-4">데이터 없음</p>
           ) : (
-            <div className="space-y-3">
-              {categoryStats.map(([cat, count], i) => (
-                <div key={cat} className="flex items-center gap-3">
-                  <span className="text-xs text-spring-text w-20 shrink-0 truncate">{cat}</span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+            <>
+              <div className="w-full h-8 flex rounded-xl overflow-hidden shadow-sm mb-4 ring-1 ring-black/5">
+                {categoryStats.slice(0, 4).map(([cat, count], i) => {
+                  const stackColors = ['bg-priority-critical', 'bg-spring-pink', 'bg-spring-blue', 'bg-spring-orange', 'bg-spring-emerald', 'bg-purple-400', 'bg-gray-300']
+                  return (
                     <div
-                      className={`${categoryColors[i % categoryColors.length]} h-2 rounded-full transition-all`}
-                      style={{ width: `${(count / maxCategoryCount) * 100}%` }}
+                      key={cat}
+                      className={`${stackColors[i % stackColors.length]} hover:opacity-90 transition-opacity`}
+                      style={{ width: `${(count / total) * 100}%` }}
+                      title={`${cat}: ${count}건`}
                     />
-                  </div>
-                  <span className="text-xs text-spring-text w-5 text-right shrink-0">{count}</span>
-                </div>
-              ))}
-            </div>
+                  )
+                })}
+              </div>
+              <div className="space-y-2.5 flex-1 overflow-y-auto">
+                {categoryStats.map(([cat, count], i) => {
+                  const barColors = [
+                    'bg-gradient-to-r from-priority-critical to-rose-400',
+                    'bg-gradient-to-r from-spring-pink to-[#FF6699]',
+                    'bg-gradient-to-r from-spring-blue to-[#4DD6FF]',
+                    'bg-gradient-to-r from-spring-orange to-[#FFC436]',
+                    'bg-gradient-to-r from-spring-emerald to-[#1EE3B9]',
+                    'bg-gradient-to-r from-purple-400 to-purple-300',
+                    'bg-gray-300',
+                  ]
+                  return (
+                    <div key={cat} className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-spring-text w-20 shrink-0 truncate">{cat}</span>
+                      <div className="flex-1 bg-spring-bg h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`${barColors[i % barColors.length]} h-full rounded-full`}
+                          style={{ width: `${(count / maxCategoryCount) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-black text-spring-text w-5 text-right shrink-0">{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>
 
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-spring-text">문의 목록</h1>
-          <p className="text-sm text-spring-text-light mt-0.5">총 {complaints.length}건</p>
+      <div className="flex items-center justify-between relative z-10">
+        <h2 className="text-xl font-black text-spring-text flex items-center gap-2">
+          <span className="text-spring-blue">📋</span> 문의 목록
+          <span className="text-sm font-medium text-spring-text-light ml-1">총 {complaints.length}건</span>
+        </h2>
+        <div className="flex items-center gap-3">
+          {staff?.role === 'counselor' && (
+            <button
+              onClick={() => { setShowForm(!showForm); setFormError('') }}
+              className="spring-gradient text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:opacity-90 hover:-translate-y-0.5 transition-all"
+            >
+              + 문의 등록
+            </button>
+          )}
         </div>
-        {staff?.role === 'counselor' && (
-          <button
-            onClick={() => { setShowForm(!showForm); setFormError('') }}
-            className="spring-gradient text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm hover:opacity-90 transition"
-          >
-            + 문의 등록
-          </button>
-        )}
       </div>
 
-      {/* 문의 등록 폼 (상담원 전용) */}
+      {/* 문의 등록 모달 (상담원 전용) */}
       {showForm && staff?.role === 'counselor' && (
-        <form onSubmit={handleRegister} className="bg-white rounded-2xl border border-spring-pink-border p-6 space-y-4 shadow-sm">
-          <h2 className="font-semibold text-spring-text">문의 등록</h2>
-          <div>
-            <label className="block text-sm font-medium text-spring-text mb-1">
-              제목 <span className="text-spring-pink">*</span>
-            </label>
-            <input
-              required
-              value={form.title}
-              onChange={e => setForm({ ...form, title: e.target.value })}
-              className={inputClass}
-              placeholder="문의 제목을 입력해 주세요"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-spring-text mb-1">
-              내용 <span className="text-spring-pink">*</span>
-            </label>
-            <textarea
-              required
-              rows={5}
-              value={form.content}
-              onChange={e => setForm({ ...form, content: e.target.value })}
-              className={`${inputClass} resize-none`}
-              placeholder="문의 내용을 자세히 입력해 주세요"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-spring-text mb-1">
-              상담원 성명 <span className="text-spring-pink">*</span>
-            </label>
-            <input
-              required
-              value={form.counselor_name}
-              onChange={e => setForm({ ...form, counselor_name: e.target.value })}
-              className={inputClass}
-            />
-          </div>
-          <div className="bg-spring-soft rounded-xl px-4 py-3 text-xs text-spring-text-light">
-            🤖 등록 후 AI가 자동으로 긴급도를 분석합니다.
-          </div>
-          {formError && <p className="text-red-500 text-sm">{formError}</p>}
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 spring-gradient text-white py-2 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? '등록 중...' : '등록하기'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="flex-1 border border-spring-pink-border text-spring-text py-2 rounded-xl text-sm hover:bg-spring-soft transition"
-            >
-              취소
-            </button>
-          </div>
-        </form>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={e => { if (e.target === e.currentTarget) { setShowForm(false); setFormError('') } }}
+        >
+          {/* 배경 오버레이 */}
+          <div className="absolute inset-0 bg-spring-text/40 backdrop-blur-sm" />
+
+          {/* 모달 */}
+          <form
+            onSubmit={handleRegister}
+            className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 space-y-5 animate-fade-in-up"
+            style={{ animation: 'fadeInUp 0.25s ease-out' }}
+          >
+            {/* 헤더 */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-black text-spring-text">문의 등록</h2>
+                <p className="text-xs text-spring-text-light mt-0.5">등록 후 AI가 자동으로 긴급도를 분석합니다</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setFormError('') }}
+                className="p-2 rounded-xl text-spring-text-light hover:bg-spring-bg hover:text-spring-text transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 구분선 */}
+            <div className="h-px bg-gradient-to-r from-spring-emerald/30 via-spring-pink/30 to-transparent" />
+
+            <div>
+              <label className="block text-sm font-bold text-spring-text mb-1.5">
+                제목 <span className="text-spring-pink">*</span>
+              </label>
+              <input
+                required
+                value={form.title}
+                onChange={e => setForm({ ...form, title: e.target.value })}
+                className={inputClass}
+                placeholder="문의 제목을 입력해 주세요"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-spring-text mb-1.5">
+                내용 <span className="text-spring-pink">*</span>
+              </label>
+              <textarea
+                required
+                rows={5}
+                value={form.content}
+                onChange={e => setForm({ ...form, content: e.target.value })}
+                className={`${inputClass} resize-none`}
+                placeholder="문의 내용을 자세히 입력해 주세요"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-spring-text mb-1.5">
+                작성자
+              </label>
+              <div className="w-full border border-spring-pink-border rounded-xl px-3 py-2 text-sm bg-spring-bg/60 text-spring-text-light select-none">
+                {form.counselor_name}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-spring-bg rounded-xl px-4 py-3 text-xs text-spring-text-light">
+              <span>🔮</span>
+              <span>등록 후 AI가 자동으로 긴급도·카테고리·담당자를 분석합니다.</span>
+            </div>
+
+            {formError && <p className="text-red-500 text-sm font-medium">{formError}</p>}
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setFormError('') }}
+                className="flex-1 border border-spring-emerald/20 text-spring-text py-2.5 rounded-xl text-sm font-bold hover:bg-spring-bg transition"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 spring-gradient text-white py-2.5 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
+              >
+                {submitting ? '등록 중...' : '등록하기'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {/* 문의 목록 */}
-      <div className="bg-white rounded-2xl border border-spring-pink-border overflow-hidden shadow-sm">
+      {(() => {
+        const totalPages = Math.ceil(complaints.length / PAGE_SIZE)
+        const pagedComplaints = complaints.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+        return (
+      <div className="space-y-3 relative z-10">
+      <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather overflow-hidden">
         {complaints.length === 0 ? (
           <div className="text-center py-16 text-spring-text-light">
-            <p className="text-4xl mb-3">🌸</p>
-            <p>등록된 문의가 없습니다.</p>
+            <p className="text-5xl mb-3">🦜</p>
+            <p className="font-semibold">등록된 문의가 없습니다.</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-spring-pink-light border-b border-spring-pink-border">
-                <th className="px-4 py-3 text-center text-spring-text font-semibold w-16">긴급도</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold">제목</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">상담원</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">상태</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-28">등록일</th>
+              <tr className="bg-spring-bg/80 border-b-2 border-spring-emerald/5 text-[11px] text-spring-text/50 uppercase tracking-widest font-black">
+                <th className="px-6 py-5 text-center w-20">긴급도</th>
+                <th className="px-6 py-5 text-left">제목</th>
+                <th className="px-6 py-5 text-left w-32">상담원</th>
+                <th className="px-6 py-5 text-left w-28">상태</th>
+                <th className="px-6 py-5 text-left w-32">등록일</th>
                 {staff?.role === 'counselor' && (
-                  <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">관리</th>
+                  <th className="px-6 py-5 text-left w-24">관리</th>
                 )}
               </tr>
             </thead>
-            <tbody>
-              {complaints.map((c) => {
+            <tbody className="divide-y divide-spring-emerald/5">
+              {pagedComplaints.map((c) => {
                 const isOwn = c.created_by_staff_id === staff?.id
                 const isEditing = editingId === c.id
 
                 if (isEditing) {
                   return (
-                    <tr key={c.id} className="bg-spring-soft border-b border-spring-pink-light">
-                      <td colSpan={5} className="px-4 py-4">
+                    <tr key={c.id} className="bg-spring-soft">
+                      <td colSpan={6} className="px-6 py-4">
                         <div className="space-y-3 max-w-2xl">
                           <input
                             value={editForm.title}
@@ -413,13 +600,13 @@ export default function DashboardPage() {
                             <button
                               onClick={() => handleEdit(c.id)}
                               disabled={editSaving}
-                              className="spring-gradient text-white px-4 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                              className="spring-gradient text-white px-4 py-1.5 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-50"
                             >
                               {editSaving ? '저장 중...' : '저장'}
                             </button>
                             <button
                               onClick={() => setEditingId(null)}
-                              className="border border-spring-pink-border text-spring-text px-4 py-1.5 rounded-xl text-xs hover:bg-white transition"
+                              className="border border-spring-emerald/20 text-spring-text px-4 py-1.5 rounded-xl text-xs hover:bg-white transition"
                             >
                               취소
                             </button>
@@ -430,48 +617,57 @@ export default function DashboardPage() {
                   )
                 }
 
+                const isSelected = selectedComplaint?.id === c.id
+                const colSpan = staff?.role === 'counselor' ? 6 : 5
                 return (
-                  <tr key={c.id} className="hover:bg-spring-soft transition-colors border-b border-spring-pink-light last:border-0">
-                    <td className="px-4 py-3 text-center text-xl">
+                  <React.Fragment key={c.id}>
+                  <tr
+                    onClick={() => handleRowClick(c)}
+                    onDoubleClick={() => handleRowDoubleClick(c)}
+                    className={`transition-colors group cursor-pointer select-none ${isSelected ? 'bg-spring-emerald/5 border-l-2 border-spring-emerald' : 'hover:bg-spring-emerald/5'}`}
+                  >
+                    <td className="px-6 py-4 text-center text-2xl group-hover:scale-110 transition-transform">
                       {c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}
                     </td>
-                    <td className="px-4 py-3">
-                      {staff?.role === 'admin' ? (
-                        <Link
-                          href={`/dashboard/${c.id}`}
-                          className="text-spring-text hover:text-spring-pink font-medium transition"
-                        >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-extrabold transition-colors ${isSelected ? 'text-spring-pink' : 'text-spring-text group-hover:text-spring-pink'}`}>
                           {c.title}
-                        </Link>
-                      ) : (
-                        <span className="text-spring-text font-medium">{c.title}</span>
-                      )}
-                      {c.final_response && (
-                        <span className="ml-2 text-xs bg-spring-emerald-light text-spring-emerald px-1.5 py-0.5 rounded-full">
-                          답변완료
                         </span>
-                      )}
+                        {c.final_response && (
+                          <span className="text-[10px] font-bold bg-spring-emerald-light text-spring-emerald px-2 py-0.5 rounded-md border border-spring-emerald/20 uppercase tracking-wide">
+                            답변완료
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-spring-text">{c.customer_name}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-spring-emerald/20 to-spring-blue/20 flex items-center justify-center text-xs font-black text-spring-text">
+                          {c.customer_name?.[0] ?? '?'}
+                        </div>
+                        <span className="text-xs font-bold text-spring-text">{c.customer_name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
                       <StatusBadge status={c.status} />
                     </td>
-                    <td className="px-4 py-3 text-spring-text-light text-xs">
+                    <td className="px-6 py-4 text-xs font-bold text-spring-text-light">
                       {formatDateShort(c.created_at)}
                     </td>
                     {staff?.role === 'counselor' && (
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         {isOwn && (
                           <div className="flex gap-1">
                             <button
-                              onClick={() => startEdit(c)}
-                              className="text-xs bg-spring-emerald-light text-spring-emerald px-2 py-1 rounded-lg hover:opacity-80"
+                              onClick={e => { e.stopPropagation(); startEdit(c) }}
+                              className="text-xs bg-spring-emerald-light text-spring-emerald px-3 py-1 rounded-lg font-bold hover:opacity-80"
                             >
                               수정
                             </button>
                             <button
-                              onClick={() => handleDelete(c.id)}
-                              className="text-xs bg-red-50 text-red-400 px-2 py-1 rounded-lg hover:opacity-80"
+                              onClick={e => { e.stopPropagation(); handleDelete(c.id) }}
+                              className="text-xs bg-red-50 text-red-400 px-3 py-1 rounded-lg font-bold hover:opacity-80"
                             >
                               삭제
                             </button>
@@ -480,25 +676,76 @@ export default function DashboardPage() {
                       </td>
                     )}
                   </tr>
+                  {isSelected && (
+                    <tr key={`${c.id}-accordion`} className="bg-spring-emerald/5 border-l-2 border-spring-emerald">
+                      <td colSpan={colSpan} className="px-6 pb-5 pt-0">
+                        <div className="grid grid-cols-2 gap-4 border-t border-spring-emerald/10 pt-4">
+                          <div>
+                            <p className="text-[11px] font-bold text-spring-text-light uppercase tracking-wide mb-2">문의 내용</p>
+                            <p className="text-sm text-spring-text leading-relaxed whitespace-pre-wrap bg-white rounded-xl px-4 py-3 border border-spring-emerald/10 max-h-36 overflow-y-auto">{c.content}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-spring-text-light uppercase tracking-wide mb-2">
+                              {c.final_response ? '최종 답변' : c.ai_response ? 'AI 답변' : '답변'}
+                            </p>
+                            {c.final_response || c.ai_response ? (
+                              <p className="text-sm text-spring-text leading-relaxed whitespace-pre-wrap bg-white rounded-xl px-4 py-3 border border-spring-emerald/10 max-h-36 overflow-y-auto">
+                                {c.final_response ?? c.ai_response}
+                              </p>
+                            ) : (
+                              <p className="text-sm text-spring-text-light italic bg-white rounded-xl px-4 py-3 border border-spring-emerald/10">아직 답변이 없습니다.</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            onClick={() => router.push(`/dashboard/${c.id}`)}
+                            className="text-xs spring-gradient text-white px-4 py-1.5 rounded-lg font-bold hover:opacity-90 transition"
+                          >
+                            상세 보기 →
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
                 )
               })}
             </tbody>
           </table>
         )}
       </div>
+
+      <Pagination
+        total={complaints.length}
+        currentPage={currentPage}
+        pageSize={PAGE_SIZE}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => { setPAGE_SIZE(size); setCurrentPage(1) }}
+      />
+      </div>
+        )
+      })()}
     </div>
   )
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    pending: 'bg-yellow-50 text-yellow-600',
-    in_progress: 'bg-spring-emerald-light text-spring-emerald',
-    resolved: 'bg-spring-pink-light text-spring-pink',
-    closed: 'bg-gray-100 text-gray-400',
+    pending:     'bg-yellow-50 text-yellow-600 border border-yellow-200',
+    in_progress: 'bg-orange-50 text-priority-high border border-orange-100',
+    resolved:    'bg-emerald-50 text-priority-low border border-emerald-100',
+    closed:      'bg-slate-50 text-priority-lowest border border-slate-200',
+  }
+  const icons: Record<string, string> = {
+    pending:     '⚠️',
+    in_progress: '🔄',
+    resolved:    '✅',
+    closed:      '🔒',
   }
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${styles[status] ?? ''}`}>
+    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold uppercase tracking-wide ${styles[status] ?? ''}`}>
+      <span className="text-xs">{icons[status] ?? ''}</span>
       {STATUS_LABEL[status as keyof typeof STATUS_LABEL] ?? status}
     </span>
   )

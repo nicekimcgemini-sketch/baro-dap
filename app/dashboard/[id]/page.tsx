@@ -16,6 +16,14 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
   const [saving, setSaving] = useState(false)
   const [savingPriority, setSavingPriority] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isOwn, setIsOwn] = useState(false)
+
+  // 수정 모드
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ title: '', content: '' })
+  const [editSaving, setEditSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -24,11 +32,13 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
 
       const { data: staff } = await supabase
         .from('staff')
-        .select('role')
+        .select('id, role')
         .eq('email', user.email!)
         .single()
 
-      if (!staff || staff.role !== 'admin') { router.push('/dashboard'); return }
+      if (!staff) { router.push('/login'); return }
+
+      setIsAdmin(staff.role === 'admin')
 
       const res = await fetch(`/api/complaints/${params.id}`)
       if (!res.ok) { router.push('/dashboard'); return }
@@ -37,10 +47,40 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
       setComplaint(data)
       setResponse(data.final_response ?? '')
       setPriority(data.priority ?? 3)
+      setIsOwn(data.created_by_staff_id === staff.id)
       setLoading(false)
     }
     init()
   }, [params.id, router])
+
+  const startEdit = () => {
+    if (!complaint) return
+    setEditForm({ title: complaint.title, content: complaint.content })
+    setEditing(true)
+  }
+
+  const saveEdit = async () => {
+    if (!editForm.title.trim() || !editForm.content.trim()) return
+    setEditSaving(true)
+    const res = await fetch(`/api/complaints/${params.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: editForm.title, content: editForm.content }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setComplaint(updated)
+      setEditing(false)
+    }
+    setEditSaving(false)
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('이 문의를 삭제하시겠습니까?')) return
+    setDeleting(true)
+    await fetch(`/api/complaints/${params.id}`, { method: 'DELETE' })
+    router.push('/dashboard')
+  }
 
   const generateResponse = async () => {
     setGenerating(true)
@@ -96,13 +136,49 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
 
       {/* 문의 내용 */}
       <div className="bg-white rounded-2xl border border-spring-pink-border p-6 shadow-sm space-y-4">
-        <h2 className="font-bold text-spring-text text-lg">{complaint.title}</h2>
+        <div className="flex items-start justify-between gap-4">
+          {editing ? (
+            <input
+              value={editForm.title}
+              onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+              className="flex-1 font-bold text-spring-text text-lg border border-spring-pink-border rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-spring-emerald bg-spring-bg"
+            />
+          ) : (
+            <h2 className="font-bold text-spring-text text-lg">{complaint.title}</h2>
+          )}
+          {isOwn && !editing && (
+            <div className="flex gap-1.5 shrink-0">
+              <button
+                onClick={startEdit}
+                className="text-xs bg-spring-emerald-light text-spring-emerald px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition"
+              >
+                수정
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-xs bg-red-50 text-red-400 px-3 py-1.5 rounded-lg font-bold hover:opacity-80 disabled:opacity-50 transition"
+              >
+                {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          )}
+        </div>
         <div className="space-y-3 text-sm">
           <div>
             <span className="text-spring-text-light block mb-1">문의 내용</span>
-            <p className="text-spring-text whitespace-pre-wrap leading-relaxed bg-spring-soft rounded-xl p-4">
-              {complaint.content}
-            </p>
+            {editing ? (
+              <textarea
+                rows={6}
+                value={editForm.content}
+                onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))}
+                className="w-full border border-spring-pink-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald resize-none bg-spring-bg"
+              />
+            ) : (
+              <p className="text-spring-text whitespace-pre-wrap leading-relaxed bg-spring-soft rounded-xl p-4">
+                {complaint.content}
+              </p>
+            )}
           </div>
           <div className="flex gap-8 pt-1">
             <div>
@@ -114,26 +190,44 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
               <p className="text-spring-text">{formatDate(complaint.created_at)}</p>
             </div>
           </div>
+          {editing && (
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={saveEdit}
+                disabled={editSaving}
+                className="spring-gradient text-white px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
+              >
+                {editSaving ? '저장 중...' : '저장'}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="border border-spring-emerald/20 text-spring-text px-4 py-2 rounded-xl text-sm hover:bg-spring-bg transition"
+              >
+                취소
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 긴급도 수정 (관리자 전용) */}
+      {/* 긴급도 — 관리자: 수정 가능 / 상담원: 읽기 전용 */}
       <div className="bg-white rounded-2xl border border-spring-pink-border p-6 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-spring-text">긴급도 설정</h3>
+          <h3 className="font-semibold text-spring-text">긴급도</h3>
           {savingPriority && <span className="text-xs text-spring-text-light">저장 중...</span>}
         </div>
         <div className="flex gap-2">
           {([1, 2, 3, 4, 5] as Priority[]).map(p => (
             <button
               key={p}
-              onClick={() => savePriority(p)}
+              onClick={() => isAdmin && savePriority(p)}
               title={PRIORITY_LABEL[p]}
+              disabled={!isAdmin}
               className={`flex-1 py-2.5 rounded-xl text-2xl border-2 transition ${
                 priority === p
                   ? 'border-spring-pink bg-spring-pink-light'
                   : 'border-spring-pink-border bg-white hover:bg-spring-soft'
-              }`}
+              } ${!isAdmin ? 'cursor-default opacity-80' : ''}`}
             >
               {PRIORITY_EMOJI[p]}
             </button>
@@ -141,43 +235,49 @@ export default function ComplaintResponsePage({ params }: { params: { id: string
         </div>
         <p className="text-xs text-spring-text-light text-center">
           현재: {PRIORITY_EMOJI[priority]} {PRIORITY_LABEL[priority]}
+          {!isAdmin && <span className="ml-2 text-spring-text-light/60">(읽기 전용)</span>}
         </p>
       </div>
 
-      {/* AI 답변 작성 */}
+      {/* AI 답변 — 관리자: 작성/저장 / 상담원: 읽기 전용 */}
       <div className="bg-white rounded-2xl border border-spring-pink-border p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-spring-text">AI 답변 작성</h3>
-          <button
-            onClick={generateResponse}
-            disabled={generating}
-            className="spring-gradient text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-50 shadow-sm transition"
-          >
-            {generating ? 'AI 생성 중...' : '🤖 AI 답변 생성'}
-          </button>
+          <h3 className="font-semibold text-spring-text">AI 답변</h3>
+          {isAdmin && (
+            <button
+              onClick={generateResponse}
+              disabled={generating}
+              className="spring-gradient text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-50 shadow-sm transition"
+            >
+              {generating ? '🔮 AI 생성 중...' : '🔮 AI 답변 생성'}
+            </button>
+          )}
         </div>
 
         {generating && (
           <div className="text-center py-4">
-            <p className="text-spring-text-light text-sm">Gemini AI가 답변을 작성 중입니다...</p>
+            <p className="text-spring-text-light text-sm">AI가 답변을 작성 중입니다...</p>
           </div>
         )}
 
         <textarea
           rows={10}
           value={response}
-          onChange={(e) => setResponse(e.target.value)}
-          placeholder="AI 답변 생성 버튼을 클릭하거나 직접 입력해 주세요"
-          className="w-full border border-spring-pink-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald resize-none bg-spring-bg"
+          onChange={(e) => isAdmin && setResponse(e.target.value)}
+          readOnly={!isAdmin}
+          placeholder={isAdmin ? 'AI 답변 생성 버튼을 클릭하거나 직접 입력해 주세요' : '아직 작성된 답변이 없습니다.'}
+          className={`w-full border border-spring-pink-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald resize-none bg-spring-bg ${!isAdmin ? 'cursor-default' : ''}`}
         />
 
-        <button
-          onClick={saveResponse}
-          disabled={saving || !response.trim()}
-          className="w-full spring-gradient text-white py-2.5 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 shadow-sm transition"
-        >
-          {saving ? '저장 중...' : '답변 저장 및 완료 처리'}
-        </button>
+        {isAdmin && (
+          <button
+            onClick={saveResponse}
+            disabled={saving || !response.trim()}
+            className="w-full spring-gradient text-white py-2.5 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 shadow-sm transition"
+          >
+            {saving ? '저장 중...' : '답변 저장 및 완료 처리'}
+          </button>
+        )}
       </div>
     </div>
   )

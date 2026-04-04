@@ -4,14 +4,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { CreateComplaintInput, Priority } from '@/lib/types'
 
 async function analyzePriority(title: string, content: string): Promise<Priority> {
-  try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' },
-    })
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: { responseMimeType: 'application/json' },
+  })
 
-    const prompt = `당신은 신한카드 고객 민원 긴급도 판단 전문가입니다.
+  const prompt = `당신은 신한카드 고객 민원 긴급도 판단 전문가입니다.
 아래 문의 내용을 읽고 긴급도를 1~5 중 하나로 판단해주세요.
 
 긴급도 기준:
@@ -27,12 +26,9 @@ async function analyzePriority(title: string, content: string): Promise<Priority
 아래 JSON 형식으로만 답변하세요:
 {"priority": 1~5 사이 숫자}`
 
-    const result = await model.generateContent(prompt)
-    const parsed = JSON.parse(result.response.text())
-    return Math.min(5, Math.max(1, parseInt(parsed.priority))) as Priority
-  } catch {
-    return 3
-  }
+  const result = await model.generateContent(prompt)
+  const parsed = JSON.parse(result.response.text())
+  return Math.min(5, Math.max(1, parseInt(parsed.priority))) as Priority
 }
 
 export async function GET(req: NextRequest) {

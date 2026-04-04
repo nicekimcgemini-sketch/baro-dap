@@ -1,19 +1,19 @@
 export type Priority = 1 | 2 | 3 | 4 | 5
 
 export const PRIORITY_EMOJI: Record<Priority, string> = {
-  1: '🟢',
-  2: '🔵',
-  3: '🟡',
-  4: '🟠',
-  5: '🔴',
+  1: '😁',
+  2: '🙂',
+  3: '😒',
+  4: '😤',
+  5: '😡',
 }
 
 export const PRIORITY_LABEL: Record<Priority, string> = {
-  1: '매우 낮음',
-  2: '낮음',
-  3: '보통',
-  4: '높음',
-  5: '매우 높음',
+  1: '매우 만족',
+  2: '보통',
+  3: '불만',
+  4: '화남',
+  5: '매우 화남',
 }
 
 export type ComplaintStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
