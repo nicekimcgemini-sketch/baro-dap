@@ -96,6 +96,7 @@ export async function analyzeComplaint(
       reasoning: parsed.reasoning,
       is_legal_sensitive: parsed.is_legal_sensitive ?? false,
       legal_topics: Array.isArray(parsed.legal_topics) ? parsed.legal_topics : [],
+      related_staff: [],
     }
   } catch {
     return {
@@ -106,6 +107,7 @@ export async function analyzeComplaint(
       reasoning: 'AI 분석에 실패하여 기본값으로 설정되었습니다.',
       is_legal_sensitive: false,
       legal_topics: [],
+      related_staff: [],
     }
   }
 }

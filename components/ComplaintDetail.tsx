@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Complaint, ComplaintStatus, Priority, PRIORITY_EMOJI, PRIORITY_LABEL, STATUS_LABEL } from '@/lib/types'
+import { Complaint, ComplaintStatus, Priority, PRIORITY_EMOJI, PRIORITY_LABEL, STATUS_LABEL, RelatedStaff } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
 interface Props {
@@ -261,6 +261,59 @@ export default function ComplaintDetail({ complaint }: Props) {
                     {complaint.assigned_staff.name}
                     <span className="text-spring-text-light ml-1">({complaint.assigned_staff.department})</span>
                   </p>
+                </div>
+              )}
+
+              {complaint.ai_analysis?.related_staff && complaint.ai_analysis.related_staff.length > 0 && (
+                <div className="pt-2 border-t border-spring-emerald/20">
+                  <span className="text-spring-emerald block mb-2 text-xs font-medium">
+                    관련 담당자 ({complaint.ai_analysis.department} 부서)
+                  </span>
+                  <div className="space-y-2">
+                    {complaint.ai_analysis.related_staff.map((s: RelatedStaff) => (
+                      <div
+                        key={s.id}
+                        className={`rounded-xl px-3 py-2.5 text-xs border ${
+                          s.is_assigned
+                            ? 'bg-spring-emerald/10 border-spring-emerald/40'
+                            : 'bg-white border-spring-emerald/15'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-spring-text">{s.name}</span>
+                            {s.is_assigned && (
+                              <span className="px-1.5 py-0.5 rounded-full bg-spring-emerald text-white text-[10px] font-bold">배정</span>
+                            )}
+                            <span className="text-spring-text-light">
+                              {s.role === 'admin' ? '관리자' : '실무담당자'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-0.5 text-spring-text-light">
+                          <div className="flex items-center gap-1">
+                            <span>✉️</span>
+                            <a href={`mailto:${s.email}`} className="hover:text-spring-emerald transition-colors">{s.email}</a>
+                          </div>
+                          {s.phone && (
+                            <div className="flex items-center gap-1">
+                              <span>📞</span>
+                              <a href={`tel:${s.phone}`} className="hover:text-spring-emerald transition-colors">{s.phone}</a>
+                            </div>
+                          )}
+                          {s.specialties.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {s.specialties.map((sp: string) => (
+                                <span key={sp} className="px-1.5 py-0.5 bg-spring-emerald/10 text-spring-emerald rounded-full text-[10px]">
+                                  {sp}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

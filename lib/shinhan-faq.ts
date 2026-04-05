@@ -1,6 +1,7 @@
 // 신한카드 공식 FAQ API 연동
 // POST https://www.shinhancard.com/mob/MOBFM147N/faqProxy.shc
 // data: { cmd: JSON.stringify(params) }
+// 매일 /api/faq/refresh (Vercel cron) 로 Supabase faq_cache 테이블에 저장
 
 const FAQ_API_URL = 'https://www.shinhancard.com/mob/MOBFM147N/faqProxy.shc'
 
@@ -40,7 +41,7 @@ export interface FaqWithContent extends FaqItem {
   answer: string
 }
 
-// 인메모리 캐시 (Vercel serverless cold start 사이에 초기화될 수 있음)
+// 인메모리 캐시 (Supabase 읽기 실패 시 fallback)
 let cache: { data: FaqItem[]; fetchedAt: number } | null = null
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6시간
 
@@ -89,11 +90,35 @@ async function fetchNodeFaqList(nodeId: string): Promise<FaqItem[]> {
   }
 }
 
-/** 15개 nodeId 전체 FAQ 목록 반환 (6시간 캐시) */
+/** 15개 nodeId 전체 FAQ 목록 반환
+ * 우선순위: 1) 인메모리 캐시 → 2) Supabase faq_cache → 3) 신한카드 API 직접 호출
+ */
 export async function getAllFaqs(): Promise<FaqItem[]> {
+  // 1) 인메모리 캐시
   if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
     return cache.data
   }
+
+  // 2) Supabase faq_cache 에서 읽기
+  try {
+    const { createServerClient } = await import('@/lib/supabase')
+    const supabase = createServerClient()
+    const { data: row } = await supabase
+      .from('faq_cache')
+      .select('data, fetched_at')
+      .eq('id', 'shinhan')
+      .single()
+
+    if (row?.data) {
+      const data = row.data as FaqItem[]
+      cache = { data, fetchedAt: new Date(row.fetched_at).getTime() }
+      return data
+    }
+  } catch {
+    // Supabase 연결 실패 시 API fallback
+  }
+
+  // 3) 신한카드 API 직접 호출 (fallback)
   const results = await Promise.all(NODE_IDS.map(fetchNodeFaqList))
   const data = results.flat()
   cache = { data, fetchedAt: Date.now() }

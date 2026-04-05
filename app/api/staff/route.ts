@@ -6,7 +6,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('staff')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('name', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
   const supabase = createServerClient()
   const body = await req.json()
 
-  const { name, department, role, email, specialties } = body
+  const { name, department, role, email, phone, specialties } = body
   if (!name || !department || !role || !email) {
     return NextResponse.json({ error: '필수 항목을 입력해주세요.' }, { status: 400 })
   }
 
   const { data, error } = await supabase
     .from('staff')
-    .insert({ name, department, role, email, specialties: specialties ?? [] })
+    .insert({ name, department, role, email, phone: phone ?? null, specialties: specialties ?? [] })
     .select()
     .single()
 

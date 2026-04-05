@@ -33,6 +33,7 @@ export interface Staff {
   department: string
   role: StaffRole
   email: string
+  phone: string | null
   specialties: string[]
   is_active: boolean
   created_at: string
@@ -57,6 +58,17 @@ export interface Complaint {
   updated_at: string
 }
 
+export interface RelatedStaff {
+  id: string
+  name: string
+  department: string
+  role: StaffRole
+  email: string
+  phone: string | null
+  specialties: string[]
+  is_assigned: boolean
+}
+
 export interface AiAnalysis {
   priority: Priority
   category: string
@@ -65,6 +77,7 @@ export interface AiAnalysis {
   reasoning: string
   is_legal_sensitive: boolean
   legal_topics: string[]
+  related_staff: RelatedStaff[]
 }
 
 export interface CreateComplaintInput {

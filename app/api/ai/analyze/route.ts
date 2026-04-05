@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   const { data: staffList } = await supabase
     .from('staff')
-    .select('id, name, specialties')
+    .select('id, name, department, role, email, phone, specialties')
     .eq('is_active', true)
     .eq('department', analysis.department)
 
@@ -50,13 +50,28 @@ export async function POST(req: NextRequest) {
     staffList ?? []
   )
 
+  const relatedStaff = (staffList ?? []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    department: s.department,
+    role: s.role,
+    email: s.email,
+    phone: s.phone ?? null,
+    specialties: s.specialties ?? [],
+    is_assigned: s.id === assignedStaffId,
+  }))
+  // 배정된 담당자를 맨 앞으로
+  relatedStaff.sort((a, b) => (b.is_assigned ? 1 : 0) - (a.is_assigned ? 1 : 0))
+
+  const analysisWithStaff = { ...analysis, related_staff: relatedStaff }
+
   const { error: updateError } = await supabase
     .from('complaints')
     .update({
       priority: analysis.priority,
       category: analysis.category,
       ai_response: analysis.ai_response,
-      ai_analysis: analysis,
+      ai_analysis: analysisWithStaff,
       assigned_staff_id: assignedStaffId,
     })
     .eq('id', complaint_id)
@@ -65,5 +80,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, analysis })
+  return NextResponse.json({ success: true, analysis: analysisWithStaff })
 }
