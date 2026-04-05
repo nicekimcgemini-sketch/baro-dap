@@ -4,11 +4,16 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import ProfileModal from '@/components/ProfileModal'
+import { Staff } from '@/lib/types'
 
 export default function Navbar() {
   const router = useRouter()
-  const [userName, setUserName] = useState('')
-  const [userRole, setUserRole] = useState('')
+  const [staffInfo, setStaffInfo] = useState<Staff | null>(null)
+  const [showProfile, setShowProfile] = useState(false)
+
+  const userName = staffInfo?.name ?? ''
+  const userRole = staffInfo ? (staffInfo.role === 'admin' ? '관리자' : '상담원') : ''
 
   useEffect(() => {
     const getUser = async () => {
@@ -16,13 +21,10 @@ export default function Navbar() {
       if (!user) return
       const { data: staff } = await supabase
         .from('staff')
-        .select('name, role')
+        .select('*')
         .eq('email', user.email!)
         .single()
-      if (staff) {
-        setUserName(staff.name)
-        setUserRole(staff.role === 'admin' ? '관리자' : '상담원')
-      }
+      if (staff) setStaffInfo(staff as Staff)
     }
     getUser()
   }, [])
@@ -60,7 +62,10 @@ export default function Navbar() {
       {/* 우측 */}
       <div className="flex items-center gap-5 text-white">
         {userName && (
-          <div className="hidden md:flex items-center gap-3 hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-white/20">
+          <button
+            onClick={() => setShowProfile(true)}
+            className="hidden md:flex items-center gap-3 hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-white/20 cursor-pointer"
+          >
             <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-black">
               {userName[0]}
             </div>
@@ -68,7 +73,7 @@ export default function Navbar() {
               <div className="font-semibold leading-tight">{userName}</div>
               <div className="text-[11px] text-white/70">{userRole}</div>
             </div>
-          </div>
+          </button>
         )}
 
         {userRole === '관리자' && (
@@ -95,6 +100,14 @@ export default function Navbar() {
           </svg>
         </button>
       </div>
+
+      {showProfile && staffInfo && (
+        <ProfileModal
+          staff={staffInfo}
+          onClose={() => setShowProfile(false)}
+          onUpdated={(updated) => setStaffInfo(updated)}
+        />
+      )}
 
       <style jsx>{`
         @keyframes float {
