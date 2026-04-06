@@ -289,34 +289,28 @@ export default function DashboardPage() {
       <div className="fixed top-0 left-0 w-[600px] h-[500px] bg-gradient-to-br from-spring-emerald/15 via-spring-blue/10 to-transparent blur-[120px] rounded-full pointer-events-none -translate-x-1/3 -translate-y-1/3 z-0" />
       <div className="fixed top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-spring-pink/10 to-transparent blur-[100px] rounded-full pointer-events-none translate-x-1/4 -translate-y-1/4 z-0" />
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 relative z-10">
-        {statCardDefs.map(({ label, sublabel, value, valueClass, borderClass, iconBg, icon, trend, filter }) => {
+      {/* 통계 카드 - 1줄 compact */}
+      <div className="flex gap-2 relative z-10 overflow-x-auto pb-1">
+        {statCardDefs.map(({ label, value, valueClass, borderClass, icon, trend, filter }) => {
           const isActive = filter !== null && isFilterActive(filter)
           return (
           <div
             key={label}
             onClick={() => filter && toggleFilter(filter)}
-            className={`p-[1.5px] rounded-2xl bg-gradient-to-br ${borderClass} shadow-feather group hover:-translate-y-1.5 transition-all duration-300 ${filter ? 'cursor-pointer' : ''} ${isActive ? 'ring-2 ring-offset-1 ring-spring-emerald scale-[1.03]' : ''}`}
+            className={`p-[1.5px] rounded-xl bg-gradient-to-br ${borderClass} shadow-feather shrink-0 transition-all duration-200 ${filter ? 'cursor-pointer hover:-translate-y-0.5' : ''} ${isActive ? 'ring-2 ring-offset-1 ring-spring-emerald scale-[1.02]' : ''}`}
           >
-            <div className={`h-full rounded-[14px] p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
-              <div className="flex justify-between items-start">
-                <p className="text-[11px] font-bold text-spring-text/60 uppercase tracking-wide leading-tight">
-                  {label} <span className="lowercase normal-case font-medium">({sublabel})</span>
-                </p>
-                <div className={`p-1.5 rounded-lg ${iconBg} transition-colors text-sm`}>{icon}</div>
-              </div>
-              <div className="mt-2 flex items-end gap-2">
-                <h3 className={`text-2xl sm:text-3xl font-black tabular-nums tracking-tighter ${valueClass}`}>{value}</h3>
+            <div className={`rounded-[10px] px-3 py-2.5 flex items-center gap-2.5 relative transition-colors ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
+              <span className="text-base leading-none">{icon}</span>
+              <div className="flex flex-col">
+                <span className={`text-lg font-black tabular-nums leading-none ${valueClass}`}>{value}</span>
+                <span className="text-[10px] font-medium text-spring-text/50 mt-0.5 whitespace-nowrap">{label}</span>
               </div>
               {trend !== null && (
-                <div className="mt-1.5 w-full bg-spring-bg h-1 rounded-full overflow-hidden">
+                <div className="w-12 bg-spring-bg h-1 rounded-full overflow-hidden ml-1">
                   <div className="bg-gradient-to-r from-spring-blue to-spring-emerald h-full rounded-full" style={{ width: `${trend}%` }} />
                 </div>
               )}
-              {isActive && (
-                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-spring-emerald animate-pulse" />
-              )}
+              {isActive && <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-spring-emerald animate-pulse" />}
             </div>
           </div>
         )})}
