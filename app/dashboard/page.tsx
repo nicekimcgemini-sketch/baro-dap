@@ -284,7 +284,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-4 relative">
       {/* 배경 글로우 */}
       <div className="fixed top-0 left-0 w-[600px] h-[500px] bg-gradient-to-br from-spring-emerald/15 via-spring-blue/10 to-transparent blur-[120px] rounded-full pointer-events-none -translate-x-1/3 -translate-y-1/3 z-0" />
       <div className="fixed top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-spring-pink/10 to-transparent blur-[100px] rounded-full pointer-events-none translate-x-1/4 -translate-y-1/4 z-0" />
@@ -299,18 +299,18 @@ export default function DashboardPage() {
             onClick={() => filter && toggleFilter(filter)}
             className={`p-[1.5px] rounded-2xl bg-gradient-to-br ${borderClass} shadow-feather group hover:-translate-y-1.5 transition-all duration-300 ${filter ? 'cursor-pointer' : ''} ${isActive ? 'ring-2 ring-offset-1 ring-spring-emerald scale-[1.03]' : ''}`}
           >
-            <div className={`h-full rounded-[14px] p-5 flex flex-col justify-between relative overflow-hidden transition-colors ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
+            <div className={`h-full rounded-[14px] p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
               <div className="flex justify-between items-start">
-                <p className="text-xs font-bold text-spring-text/60 uppercase tracking-wide">
+                <p className="text-[11px] font-bold text-spring-text/60 uppercase tracking-wide leading-tight">
                   {label} <span className="lowercase normal-case font-medium">({sublabel})</span>
                 </p>
-                <div className={`p-2 rounded-xl ${iconBg} transition-colors text-base`}>{icon}</div>
+                <div className={`p-1.5 rounded-lg ${iconBg} transition-colors text-sm`}>{icon}</div>
               </div>
-              <div className="mt-4 flex items-end gap-2">
-                <h3 className={`text-4xl font-black tabular-nums tracking-tighter ${valueClass}`}>{value}</h3>
+              <div className="mt-2 flex items-end gap-2">
+                <h3 className={`text-2xl sm:text-3xl font-black tabular-nums tracking-tighter ${valueClass}`}>{value}</h3>
               </div>
               {trend !== null && (
-                <div className="mt-2 w-full bg-spring-bg h-1.5 rounded-full overflow-hidden">
+                <div className="mt-1.5 w-full bg-spring-bg h-1 rounded-full overflow-hidden">
                   <div className="bg-gradient-to-r from-spring-blue to-spring-emerald h-full rounded-full" style={{ width: `${trend}%` }} />
                 </div>
               )}
@@ -323,9 +323,9 @@ export default function DashboardPage() {
       </div>
 
       {/* 차트 영역 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 relative z-10">
         {/* 상담원별 문의 현황 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px] relative overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px] relative overflow-hidden">
           <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
             <span className="text-[160px]">👥</span>
           </div>
@@ -367,7 +367,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 일별 접수 추이 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px]">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-extrabold text-spring-text text-sm flex items-center gap-2">
               <span className="text-spring-pink">📊</span> 일별 접수 (7일)
@@ -399,7 +399,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 긴급도별 현황 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px]">
           <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
             <span className="text-priority-high">🔥</span> 긴급도 분포
           </h3>
@@ -444,7 +444,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 카테고리별 현황 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px]">
           <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
             <span className="text-spring-orange">🗂️</span> 카테고리별
           </h3>
