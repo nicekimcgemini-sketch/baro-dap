@@ -40,10 +40,10 @@ export default async function AdminPage() {
     <div className="space-y-4">
       <h1 className="text-lg font-bold text-spring-text">관리자 대시보드</h1>
 
-      {/* 통계 카드 - 1줄 compact */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-2 sm:flex sm:flex-nowrap gap-2 sm:overflow-x-auto sm:pb-1">
         {statCards.map(({ label, value, color }) => (
-          <div key={label} className="shrink-0 bg-white rounded-xl border border-spring-pink-border px-3 py-2.5 shadow-sm flex items-center gap-2.5">
+          <div key={label} className="sm:shrink-0 bg-white rounded-xl border border-spring-pink-border px-3 py-2.5 shadow-sm flex items-center gap-2.5">
             <div>
               <p className={`text-xl font-black ${color}`}>{value}</p>
               <p className="text-[11px] text-spring-text-light whitespace-nowrap">{label}</p>

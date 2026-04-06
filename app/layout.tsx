@@ -10,13 +10,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <head>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        <link
+          rel="preload"
+          as="style"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+        />
         <link
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
           rel="stylesheet"
         />
-        <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web" />
       </head>
-      <body className="feather-bg min-h-screen text-spring-text">{children}</body>
+      <body className="feather-bg min-h-screen text-spring-text">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-spring-emerald focus:text-white focus:rounded-xl focus:font-bold focus:text-sm"
+        >
+          본문 바로가기
+        </a>
+        {children}
+      </body>
     </html>
   )
 }

@@ -4,6 +4,10 @@ import { createServerClient } from '@/lib/supabase'
 const PASSWORD = 'Shinhan@2026'
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const supabase = createServerClient()
 
   // 1. 전체 담당자 조회

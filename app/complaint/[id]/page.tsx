@@ -1,13 +1,23 @@
-import { Complaint, STATUS_LABEL } from '@/lib/types'
+import { createClient } from '@supabase/supabase-js'
+import { STATUS_LABEL } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-async function getComplaint(id: string): Promise<Complaint> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const res = await fetch(`${baseUrl}/api/complaints/${id}`, { cache: 'no-store' })
-  if (!res.ok) notFound()
-  return res.json()
+async function getComplaint(id: string) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data, error } = await supabase
+    .from('complaints')
+    .select('id, title, content, customer_name, status, category, created_at')
+    .eq('id', id)
+    .single()
+
+  if (error || !data) notFound()
+  return data
 }
 
 export default async function ComplaintConfirmPage({ params }: { params: { id: string } }) {
@@ -37,7 +47,7 @@ export default async function ComplaintConfirmPage({ params }: { params: { id: s
           <div>
             <span className="text-xs text-spring-text-light block mb-1">현재 상태</span>
             <span className="inline-block bg-spring-emerald-light text-spring-emerald text-sm font-medium px-3 py-1 rounded-full">
-              {STATUS_LABEL[complaint.status]}
+              {STATUS_LABEL[complaint.status as keyof typeof STATUS_LABEL]}
             </span>
           </div>
 

@@ -289,28 +289,36 @@ export default function DashboardPage() {
       <div className="fixed top-0 left-0 w-[600px] h-[500px] bg-gradient-to-br from-spring-emerald/15 via-spring-blue/10 to-transparent blur-[120px] rounded-full pointer-events-none -translate-x-1/3 -translate-y-1/3 z-0" />
       <div className="fixed top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-spring-pink/10 to-transparent blur-[100px] rounded-full pointer-events-none translate-x-1/4 -translate-y-1/4 z-0" />
 
-      {/* 통계 카드 - 1줄 compact */}
-      <div className="flex gap-2 relative z-10 overflow-x-auto pb-1">
-        {statCardDefs.map(({ label, value, valueClass, borderClass, icon, trend, filter }) => {
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 relative z-10">
+        {statCardDefs.map(({ label, value, valueClass, borderClass, icon, trend, filter }, idx) => {
           const isActive = filter !== null && isFilterActive(filter)
           return (
           <div
             key={label}
             onClick={() => filter && toggleFilter(filter)}
-            className={`p-[1.5px] rounded-xl bg-gradient-to-br ${borderClass} shadow-feather shrink-0 transition-all duration-200 ${filter ? 'cursor-pointer hover:-translate-y-0.5' : ''} ${isActive ? 'ring-2 ring-offset-1 ring-spring-emerald scale-[1.02]' : ''}`}
+            role={filter ? 'button' : undefined}
+            aria-pressed={filter ? isActive : undefined}
+            aria-label={filter ? `${label} 필터${isActive ? ' (적용중)' : ''}` : label}
+            tabIndex={filter ? 0 : undefined}
+            onKeyDown={filter ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFilter(filter) } } : undefined}
+            className={`p-[1.5px] rounded-2xl bg-gradient-to-br ${borderClass} shadow-feather transition-all duration-200
+              ${idx === 4 ? 'col-span-2 sm:col-span-1' : ''}
+              ${filter ? 'cursor-pointer active:scale-95 hover:-translate-y-0.5' : ''}
+              ${isActive ? 'ring-2 ring-offset-1 ring-spring-emerald scale-[1.02]' : ''}`}
           >
-            <div className={`rounded-[10px] px-3 py-2.5 flex items-center gap-2.5 relative transition-colors ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
-              <span className="text-base leading-none">{icon}</span>
-              <div className="flex flex-col">
-                <span className={`text-lg font-black tabular-nums leading-none ${valueClass}`}>{value}</span>
-                <span className="text-[10px] font-medium text-spring-text/50 mt-0.5 whitespace-nowrap">{label}</span>
+            <div className={`h-full rounded-[14px] p-3 lg:p-5 flex flex-col items-center gap-2 relative transition-colors text-center ${isActive ? 'bg-spring-emerald/5' : 'bg-white/95'}`}>
+              <span aria-hidden="true" className="text-2xl lg:text-3xl leading-none">{icon}</span>
+              <div className="flex flex-col items-center">
+                <span className={`text-xl lg:text-3xl font-black tabular-nums leading-none ${valueClass}`}>{value}</span>
+                <span className="text-xs lg:text-sm font-medium text-spring-text/50 mt-1">{label}</span>
               </div>
               {trend !== null && (
-                <div className="w-12 bg-spring-bg h-1 rounded-full overflow-hidden ml-1">
-                  <div className="bg-gradient-to-r from-spring-blue to-spring-emerald h-full rounded-full" style={{ width: `${trend}%` }} />
+                <div className="w-full bg-spring-bg h-1 rounded-full overflow-hidden mt-auto">
+                  <div className="bg-gradient-to-r from-spring-blue to-spring-emerald h-full rounded-full transition-all" style={{ width: `${trend}%` }} />
                 </div>
               )}
-              {isActive && <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-spring-emerald animate-pulse" />}
+              {isActive && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-spring-emerald animate-pulse" />}
             </div>
           </div>
         )})}
@@ -426,7 +434,7 @@ export default function DashboardPage() {
               )
             })}
             {unsetCount > 0 && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 rounded-lg px-1 py-0.5">
                 <span className="text-xl w-6 text-center">⏳</span>
                 <div className="flex-1 bg-spring-bg h-2.5 rounded-full overflow-hidden">
                   <div className="bg-gray-300 h-full rounded-full" style={{ width: `${(unsetCount / maxPriorityCount) * 100}%` }} />
@@ -514,14 +522,27 @@ export default function DashboardPage() {
       )}
 
       {/* 헤더 */}
-      <div className="flex items-center justify-between relative z-10">
+      <div className="flex items-center justify-between relative z-10 flex-wrap gap-2">
         <h2 className="text-xl font-black text-spring-text flex items-center gap-2">
           <span className="text-spring-blue">📋</span> 문의 목록
           <span className="text-sm font-medium text-spring-text-light ml-1">
             {activeFilters.length > 0 ? `${filteredComplaints.length}건 / 전체 ${complaints.length}건` : `총 ${complaints.length}건`}
           </span>
         </h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap ml-auto">
+          {/* 페이지당 건수 */}
+          <div className="flex items-center gap-1.5 text-xs text-spring-text-light">
+            <span>페이지당</span>
+            <select
+              value={PAGE_SIZE}
+              onChange={e => { setPAGE_SIZE(Number(e.target.value)); setCurrentPage(1) }}
+              className="border border-spring-pink-border rounded-lg px-2 py-1 text-xs text-spring-text bg-white focus:outline-none focus:ring-2 focus:ring-spring-emerald"
+            >
+              {[10, 20, 50, 100].map(size => (
+                <option key={size} value={size}>{size}건</option>
+              ))}
+            </select>
+          </div>
           {staff?.role === 'counselor' && (
             <button
               onClick={() => { setShowForm(!showForm); setFormError('') }}
@@ -536,6 +557,9 @@ export default function DashboardPage() {
       {/* 문의 등록 모달 (상담원 전용) */}
       {showForm && staff?.role === 'counselor' && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="register-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={e => { if (e.target === e.currentTarget) { setShowForm(false); setFormError('') } }}
         >
@@ -551,7 +575,7 @@ export default function DashboardPage() {
             {/* 헤더 */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-black text-spring-text">문의 등록</h2>
+                <h2 id="register-modal-title" className="text-xl font-black text-spring-text">문의 등록</h2>
                 <p className="text-xs text-spring-text-light mt-0.5">등록 후 AI가 자동으로 긴급도를 분석합니다</p>
               </div>
               <button
@@ -639,17 +663,69 @@ export default function DashboardPage() {
             <p className="font-semibold">등록된 문의가 없습니다.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[600px]">
+          <>
+          {/* 모바일 카드 뷰 */}
+          <div className="md:hidden space-y-2 p-3">
+            {pagedComplaints.map((c) => {
+              const isOwn = c.created_by_staff_id === staff?.id
+              const isSelected = selectedComplaint?.id === c.id
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => handleRowClick(c)}
+                  onDoubleClick={() => handleRowDoubleClick(c)}
+                  className={`rounded-2xl border p-4 shadow-sm cursor-pointer select-none transition-colors ${
+                    isSelected ? 'border-spring-emerald bg-spring-emerald/5' : 'bg-white border-spring-pink-border'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl shrink-0 mt-0.5">{c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-bold text-sm leading-snug line-clamp-2 transition-colors ${isSelected ? 'text-spring-pink' : 'text-spring-text'}`}>{c.title}</p>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <StatusBadge status={c.status} />
+                        {c.final_response && (
+                          <span className="text-[10px] font-bold bg-spring-emerald-light text-spring-emerald px-2 py-0.5 rounded-md border border-spring-emerald/20 uppercase">답변완료</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-xs text-spring-text-light">{c.customer_name}</span>
+                        <span className="text-xs text-spring-text-light">{formatDateShort(c.created_at)}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="mt-3 pt-3 border-t border-spring-emerald/10 space-y-2">
+                          <p className="text-xs text-spring-text leading-relaxed line-clamp-3">{c.content}</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex gap-1">
+                              {staff?.role === 'counselor' && isOwn && (
+                                <>
+                                  <button onClick={e => { e.stopPropagation(); startEdit(c) }} className="text-xs bg-spring-emerald-light text-spring-emerald px-3 py-1 rounded-lg font-bold">수정</button>
+                                  <button onClick={e => { e.stopPropagation(); handleDelete(c.id) }} className="text-xs bg-red-50 text-red-400 px-3 py-1 rounded-lg font-bold">삭제</button>
+                                </>
+                              )}
+                            </div>
+                            <button onClick={e => { e.stopPropagation(); router.push(`/dashboard/${c.id}`) }} className="text-xs spring-gradient text-white px-4 py-1.5 rounded-lg font-bold">상세 보기 →</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {/* 데스크탑 테이블 */}
+          <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]" aria-label="문의 목록">
             <thead>
               <tr className="bg-spring-bg/80 border-b-2 border-spring-emerald/5 text-[11px] text-spring-text/50 uppercase tracking-widest font-black">
-                <th className="px-3 py-4 text-center w-14">긴급도</th>
-                <th className="px-3 py-4 text-left">제목</th>
-                <th className="px-3 py-4 text-left w-24">상담원</th>
-                <th className="px-3 py-4 text-left w-20">상태</th>
-                <th className="px-3 py-4 text-left w-24">등록일</th>
+                <th scope="col" className="px-3 py-4 text-center w-14">긴급도</th>
+                <th scope="col" className="px-3 py-4 text-left">제목</th>
+                <th scope="col" className="px-3 py-4 text-left w-24">상담원</th>
+                <th scope="col" className="px-3 py-4 text-left w-20">상태</th>
+                <th scope="col" className="px-3 py-4 text-left w-24">등록일</th>
                 {staff?.role === 'counselor' && (
-                  <th className="px-3 py-4 text-left w-20">관리</th>
+                  <th scope="col" className="px-3 py-4 text-left w-20">관리</th>
                 )}
               </tr>
             </thead>
@@ -800,6 +876,7 @@ export default function DashboardPage() {
             </tbody>
           </table>
           </div>
+          </>
         )}
       </div>
 
@@ -809,6 +886,7 @@ export default function DashboardPage() {
         pageSize={PAGE_SIZE}
         onPageChange={setCurrentPage}
         onPageSizeChange={(size) => { setPAGE_SIZE(size); setCurrentPage(1) }}
+        hidePageSizeSelector
       />
       </div>
         )

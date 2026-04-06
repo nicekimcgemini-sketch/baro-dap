@@ -84,6 +84,9 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
@@ -91,15 +94,15 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
         {/* 헤더 */}
         <div className="spring-gradient px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-lg font-black text-white">
+            <div aria-hidden="true" className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-lg font-black text-white">
               {staff.name[0]}
             </div>
             <div>
-              <p className="text-white font-bold text-base leading-tight">{staff.name}</p>
+              <p id="profile-modal-title" className="text-white font-bold text-base leading-tight">{staff.name}</p>
               <p className="text-white/70 text-xs">{staff.email}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white text-xl leading-none">✕</button>
+          <button onClick={onClose} aria-label="프로필 닫기" className="text-white/70 hover:text-white text-xl leading-none">✕</button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-6 max-h-[75vh] overflow-y-auto">
@@ -107,19 +110,19 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
           <form onSubmit={saveInfo} className="space-y-3">
             <h3 className="text-sm font-bold text-spring-text">기본 정보</h3>
             <div>
-              <label className="text-xs text-spring-text-light block mb-1">이름</label>
-              <input value={name} onChange={e => { setName(e.target.value); setInfoSuccess(false) }} className={ic} required />
+              <label htmlFor="profile-name" className="text-xs text-spring-text-light block mb-1">이름</label>
+              <input id="profile-name" value={name} onChange={e => { setName(e.target.value); setInfoSuccess(false) }} className={ic} required aria-describedby={infoError ? 'info-error' : undefined} />
             </div>
             <div>
-              <label className="text-xs text-spring-text-light block mb-1">연락처</label>
-              <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setInfoSuccess(false) }} className={ic} placeholder="010-0000-0000" />
+              <label htmlFor="profile-phone" className="text-xs text-spring-text-light block mb-1">연락처</label>
+              <input id="profile-phone" type="tel" autoComplete="tel" value={phone} onChange={e => { setPhone(e.target.value); setInfoSuccess(false) }} className={ic} placeholder="010-0000-0000" />
             </div>
             <div>
-              <label className="text-xs text-spring-text-light block mb-1">부서 / 역할</label>
-              <input value={`${staff.department} / ${staff.role === 'admin' ? '관리자' : '상담원'}`} disabled className={`${ic} opacity-50 cursor-not-allowed`} />
+              <label htmlFor="profile-dept" className="text-xs text-spring-text-light block mb-1">부서 / 역할</label>
+              <input id="profile-dept" value={`${staff.department} / ${staff.role === 'admin' ? '관리자' : '상담원'}`} disabled aria-disabled="true" className={`${ic} opacity-50 cursor-not-allowed`} />
             </div>
-            {infoError && <p className="text-spring-pink text-xs">{infoError}</p>}
-            {infoSuccess && <p className="text-spring-emerald text-xs font-medium">저장됐습니다.</p>}
+            {infoError && <p id="info-error" role="alert" className="text-spring-pink text-xs">{infoError}</p>}
+            {infoSuccess && <p role="status" className="text-spring-emerald text-xs font-medium">저장됐습니다.</p>}
             <button type="submit" disabled={infoSaving} className="w-full spring-gradient text-white text-sm py-2 rounded-xl hover:opacity-90 disabled:opacity-50 font-medium">
               {infoSaving ? '저장 중...' : '정보 저장'}
             </button>
@@ -131,19 +134,24 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
           <form onSubmit={changePassword} className="space-y-3">
             <h3 className="text-sm font-bold text-spring-text">비밀번호 변경</h3>
             <div className="relative">
-              <label className="text-xs text-spring-text-light block mb-1">현재 비밀번호</label>
+              <label htmlFor="profile-current-pw" className="text-xs text-spring-text-light block mb-1">현재 비밀번호</label>
               <input
+                id="profile-current-pw"
                 type={showPw ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={currentPw}
                 onChange={e => { setCurrentPw(e.target.value); setPwSuccess(false) }}
                 className={`${ic} pr-14`}
                 placeholder="현재 비밀번호"
+                aria-describedby={pwError ? 'pw-error' : undefined}
               />
             </div>
             <div>
-              <label className="text-xs text-spring-text-light block mb-1">새 비밀번호 (6자 이상)</label>
+              <label htmlFor="profile-new-pw" className="text-xs text-spring-text-light block mb-1">새 비밀번호 (6자 이상)</label>
               <input
+                id="profile-new-pw"
                 type={showPw ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={newPw}
                 onChange={e => { setNewPw(e.target.value); setPwSuccess(false) }}
                 className={ic}
@@ -151,21 +159,23 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
               />
             </div>
             <div>
-              <label className="text-xs text-spring-text-light block mb-1">새 비밀번호 확인</label>
+              <label htmlFor="profile-confirm-pw" className="text-xs text-spring-text-light block mb-1">새 비밀번호 확인</label>
               <input
+                id="profile-confirm-pw"
                 type={showPw ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={confirmPw}
                 onChange={e => { setConfirmPw(e.target.value); setPwSuccess(false) }}
                 className={ic}
                 placeholder="새 비밀번호 확인"
               />
             </div>
-            <label className="flex items-center gap-2 text-xs text-spring-text-light cursor-pointer select-none">
-              <input type="checkbox" checked={showPw} onChange={e => setShowPw(e.target.checked)} className="accent-spring-emerald" />
+            <label htmlFor="profile-show-pw" className="flex items-center gap-2 text-xs text-spring-text-light cursor-pointer select-none">
+              <input id="profile-show-pw" type="checkbox" checked={showPw} onChange={e => setShowPw(e.target.checked)} className="accent-spring-emerald" />
               비밀번호 표시
             </label>
-            {pwError && <p className="text-spring-pink text-xs">{pwError}</p>}
-            {pwSuccess && <p className="text-spring-emerald text-xs font-medium">비밀번호가 변경됐습니다.</p>}
+            {pwError && <p id="pw-error" role="alert" className="text-spring-pink text-xs">{pwError}</p>}
+            {pwSuccess && <p role="status" className="text-spring-emerald text-xs font-medium">비밀번호가 변경됐습니다.</p>}
             <button type="submit" disabled={pwSaving || !currentPw || !newPw || !confirmPw} className="w-full bg-spring-emerald text-white text-sm py-2 rounded-xl hover:opacity-90 disabled:opacity-50 font-medium">
               {pwSaving ? '변경 중...' : '비밀번호 변경'}
             </button>

@@ -46,48 +46,52 @@ export default async function CounselPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-spring-text">민원 목록</h1>
         <span className="text-sm text-spring-text-light">총 {complaints.length}건</span>
       </div>
 
-      <div className="flex gap-2 mb-3 flex-wrap">
-        {statuses.map(({ value, label }) => {
-          const isActive = (searchParams.status ?? '') === value
-          return (
-            <a
-              key={value}
-              href={buildUrl({ status: value, priority: searchParams.priority })}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                isActive
-                  ? 'spring-gradient text-white shadow-md'
-                  : 'bg-white text-spring-text border border-spring-pink-border hover:border-spring-pink'
-              }`}
-            >
-              {label}
-            </a>
-          )
-        })}
-      </div>
+      <div className="bg-white rounded-2xl border border-spring-pink-border p-3 mb-4 space-y-2.5 shadow-sm">
+        <div className="flex gap-1.5 flex-wrap">
+          {statuses.map(({ value, label }) => {
+            const isActive = (searchParams.status ?? '') === value
+            return (
+              <a
+                key={value}
+                href={buildUrl({ status: value, priority: searchParams.priority })}
+                aria-current={isActive ? 'true' : undefined}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                  isActive
+                    ? 'spring-gradient text-white shadow-md'
+                    : 'bg-spring-bg text-spring-text border border-spring-pink-border hover:border-spring-pink'
+                }`}
+              >
+                {label}
+              </a>
+            )
+          })}
+        </div>
 
-      <div className="flex gap-2 mb-5 flex-wrap items-center">
-        <span className="text-xs text-spring-text-light font-medium mr-1">긴급도</span>
-        {priorities.map(({ value, label }) => {
-          const isActive = (searchParams.priority ?? '') === value
-          return (
-            <a
-              key={value}
-              href={buildUrl({ status: searchParams.status, priority: value })}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                isActive
-                  ? 'bg-spring-emerald text-white shadow-md'
-                  : 'bg-white text-spring-text border border-spring-pink-border hover:border-spring-emerald'
-              }`}
-            >
-              {label}
-            </a>
-          )
-        })}
+        <div className="flex gap-1.5 flex-wrap items-center border-t border-spring-pink-light pt-2.5">
+          <span className="text-xs text-spring-text-light font-medium">긴급도</span>
+          {priorities.map(({ value, label }) => {
+            const isActive = (searchParams.priority ?? '') === value
+            return (
+              <a
+                key={value}
+                href={buildUrl({ status: searchParams.status, priority: value })}
+                aria-current={isActive ? 'true' : undefined}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                  isActive
+                    ? 'bg-spring-emerald text-white shadow-md'
+                    : 'bg-spring-bg text-spring-text border border-spring-pink-border hover:border-spring-emerald'
+                }`}
+              >
+                {label}
+              </a>
+            )
+          })}
+        </div>
       </div>
 
       <ComplaintList complaints={complaints} />

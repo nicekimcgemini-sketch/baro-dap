@@ -35,7 +35,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="h-14 w-full bg-gradient-to-r from-[#00C2A0] via-[#00B4D8] to-[#FF2A7A] flex items-center justify-between px-4 lg:px-10 shadow-lg sticky top-0 z-50 border-b border-white/20"
+    <nav aria-label="주 내비게이션" className="h-14 w-full bg-gradient-to-r from-[#00C2A0] via-[#00B4D8] to-[#FF2A7A] flex items-center justify-between px-4 lg:px-10 shadow-lg sticky top-0 z-50 border-b border-white/20"
       style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
     >
       {/* 앵무새 로고 */}
@@ -64,6 +64,7 @@ export default function Navbar() {
         {userName && (
           <button
             onClick={() => setShowProfile(true)}
+            aria-label={`${userName} 프로필 편집`}
             className="hidden md:flex items-center gap-3 hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-white/20 cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-sm font-black">
@@ -91,8 +92,8 @@ export default function Navbar() {
             {/* 모바일 아이콘만 */}
             <Link
               href="/admin/staff"
+              aria-label="담당자 관리"
               className="md:hidden p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              title="담당자 관리"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
                 <path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.63-28.19,8,8,0,1,1-15.72-2.62A40,40,0,1,1,192,112a67.5,67.5,0,0,1,54.4,27.2A8,8,0,0,1,244.8,150.4ZM136,184a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16h88A8,8,0,0,1,136,184Zm-32-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H96A8,8,0,0,1,104,128Zm-8-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H88A8,8,0,0,1,96,72Z"/>
@@ -105,8 +106,8 @@ export default function Navbar() {
 
         <button
           onClick={handleLogout}
+          aria-label="로그아웃"
           className="text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors"
-          title="로그아웃"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 256 256">
             <path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z" />

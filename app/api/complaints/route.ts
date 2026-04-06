@@ -31,6 +31,15 @@ async function analyzePriority(title: string, content: string): Promise<Priority
   return Math.min(5, Math.max(1, parseInt(parsed.priority))) as Priority
 }
 
+function maskCardNumbers(text: string | null): string | null {
+  if (!text) return text
+  // 16자리 카드번호 패턴: 1234-5678-9012-3456 또는 1234567890123456
+  return text.replace(
+    /\b(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})\b/g,
+    '$1-****-****-$4'
+  )
+}
+
 export async function GET(req: NextRequest) {
   const supabase = createServerClient()
   const { searchParams } = new URL(req.url)
@@ -48,7 +57,15 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  const masked = data?.map((c) => ({
+    ...c,
+    content: maskCardNumbers(c.content),
+    ai_response: maskCardNumbers(c.ai_response),
+    final_response: maskCardNumbers(c.final_response),
+  }))
+
+  return NextResponse.json(masked)
 }
 
 export async function POST(req: NextRequest) {

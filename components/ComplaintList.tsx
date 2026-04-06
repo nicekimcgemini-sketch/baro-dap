@@ -54,15 +54,15 @@ export default function ComplaintList({ complaints }: Props) {
       {/* 데스크탑 테이블 */}
       <div className="hidden md:block bg-white rounded-2xl border border-spring-pink-border overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[600px]">
+          <table className="w-full text-sm min-w-[600px]" aria-label="민원 목록">
             <thead>
               <tr className="bg-spring-pink-light border-b border-spring-pink-border">
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-12">긴급도</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold">제목</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">분류</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">상담원명</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">상태</th>
-                <th className="px-4 py-3 text-left text-spring-text font-semibold w-32">접수일시</th>
+                <th scope="col" className="px-4 py-3 text-left text-spring-text font-semibold w-12">긴급도</th>
+                <th scope="col" className="px-4 py-3 text-left text-spring-text font-semibold">제목</th>
+                <th scope="col" className="px-4 py-3 text-left text-spring-text font-semibold w-20">분류</th>
+                <th scope="col" className="px-4 py-3 text-left text-spring-text font-semibold w-24">상담원명</th>
+                <th scope="col" className="px-4 py-3 text-left text-spring-text font-semibold w-20">상태</th>
+                <th scope="col" className="px-4 py-3 text-left text-spring-text font-semibold w-32">접수일시</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-spring-pink-light">

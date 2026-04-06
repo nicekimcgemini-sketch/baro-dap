@@ -36,31 +36,37 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-spring-pink-border p-8">
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" aria-label="로그인 폼">
             <div>
-              <label className="block text-sm font-medium text-spring-text mb-1">이메일</label>
+              <label htmlFor="login-email" className="block text-sm font-medium text-spring-text mb-1">이메일</label>
               <input
+                id="login-email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-spring-pink-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald bg-spring-bg"
                 placeholder="your@email.com"
+                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-spring-text mb-1">비밀번호</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-spring-text mb-1">비밀번호</label>
               <input
+                id="login-password"
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-spring-pink-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-spring-emerald bg-spring-bg"
                 placeholder="••••••••"
+                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
 
-            {error && <p className="text-spring-pink text-sm">{error}</p>}
+            {error && <p id="login-error" role="alert" className="text-spring-pink text-sm">{error}</p>}
 
             <button
               type="submit"

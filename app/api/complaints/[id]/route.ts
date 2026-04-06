@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 
+function maskCardNumbers(text: string | null): string | null {
+  if (!text) return text
+  return text.replace(
+    /\b(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})[-\s]?(\d{4})\b/g,
+    '$1-****-****-$4'
+  )
+}
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createServerClient()
 
@@ -11,7 +19,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
-  return NextResponse.json(data)
+
+  return NextResponse.json({
+    ...data,
+    content: maskCardNumbers(data.content),
+    ai_response: maskCardNumbers(data.ai_response),
+    final_response: maskCardNumbers(data.final_response),
+  })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {

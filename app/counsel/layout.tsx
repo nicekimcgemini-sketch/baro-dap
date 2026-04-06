@@ -4,7 +4,7 @@ export default function CounselLayout({ children }: { children: React.ReactNode 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-3 py-4 overflow-x-hidden">{children}</main>
+      <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 overflow-x-hidden">{children}</main>
     </div>
   )
 }

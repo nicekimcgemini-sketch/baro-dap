@@ -8,9 +8,10 @@ interface Props {
   pageSize: number
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
+  hidePageSizeSelector?: boolean
 }
 
-export default function Pagination({ total, currentPage, pageSize, onPageChange, onPageSizeChange }: Props) {
+export default function Pagination({ total, currentPage, pageSize, onPageChange, onPageSizeChange, hidePageSizeSelector }: Props) {
   const totalPages = Math.ceil(total / pageSize)
   if (total === 0) return null
 
@@ -26,8 +27,9 @@ export default function Pagination({ total, currentPage, pageSize, onPageChange,
     }, [])
 
   return (
-    <div className="flex items-center justify-between gap-4 flex-wrap">
+    <nav aria-label="페이지 탐색" className="flex items-center justify-center gap-4 flex-wrap">
       {/* 페이지 크기 선택 */}
+      {!hidePageSizeSelector && (
       <div className="flex items-center gap-2 text-xs text-spring-text-light">
         <span>페이지당</span>
         <div className="flex gap-1">
@@ -47,27 +49,32 @@ export default function Pagination({ total, currentPage, pageSize, onPageChange,
         </div>
         <span>건</span>
       </div>
+      )}
 
       {/* 페이지 버튼 */}
       <div className="flex items-center gap-1.5">
         <button
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
+          aria-label="첫 페이지"
           className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-spring-text-light hover:bg-white hover:text-spring-text disabled:opacity-30 disabled:cursor-not-allowed transition"
         >«</button>
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
+          aria-label="이전 페이지"
           className="px-3 py-1.5 rounded-lg text-xs font-bold text-spring-text-light hover:bg-white hover:text-spring-text disabled:opacity-30 disabled:cursor-not-allowed transition"
         >‹</button>
 
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`e-${i}`} className="px-2 text-xs text-spring-text-light">…</span>
+            <span key={`e-${i}`} aria-hidden="true" className="px-2 text-xs text-spring-text-light">…</span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p as number)}
+              aria-label={`${p}페이지`}
+              aria-current={currentPage === p ? 'page' : undefined}
               className={`w-8 h-8 rounded-lg text-xs font-black transition ${
                 currentPage === p
                   ? 'spring-gradient text-white shadow-sm'
@@ -80,16 +87,18 @@ export default function Pagination({ total, currentPage, pageSize, onPageChange,
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
+          aria-label="다음 페이지"
           className="px-3 py-1.5 rounded-lg text-xs font-bold text-spring-text-light hover:bg-white hover:text-spring-text disabled:opacity-30 disabled:cursor-not-allowed transition"
         >›</button>
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
+          aria-label="마지막 페이지"
           className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-spring-text-light hover:bg-white hover:text-spring-text disabled:opacity-30 disabled:cursor-not-allowed transition"
         >»</button>
 
-        <span className="ml-1 text-xs text-spring-text-light">{start}–{end} / {total}건</span>
+        <span className="ml-1 text-xs text-spring-text-light" aria-live="polite">{start}–{end} / {total}건</span>
       </div>
-    </div>
+    </nav>
   )
 }
