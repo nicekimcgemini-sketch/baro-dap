@@ -310,7 +310,7 @@ export default function StaffTable({ initialStaff }: Props) {
       {showAddForm && (
         <form onSubmit={addStaff} className="bg-spring-emerald-light rounded-2xl border border-spring-emerald/30 p-5 space-y-3">
           <h3 className="font-semibold text-spring-emerald-dark text-sm">새 담당자 추가</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input required placeholder="이름" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={ic} />
             <input required type="email" placeholder="이메일" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className={ic} />
             <input type="tel" placeholder="연락처 (예: 010-1234-5678)" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className={ic} />
@@ -336,8 +336,9 @@ export default function StaffTable({ initialStaff }: Props) {
 
       {/* 담당자 목록 */}
       <div className="bg-white rounded-2xl border border-spring-pink-border overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
         {/* 헤더 */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_2fr_1fr_1fr] bg-spring-pink-light border-b border-spring-pink-border px-4 py-2.5 text-xs font-semibold text-spring-text">
+        <div className="grid grid-cols-[2fr_1fr_1fr_2fr_1fr_1fr] bg-spring-pink-light border-b border-spring-pink-border px-4 py-2.5 text-xs font-semibold text-spring-text min-w-[640px]">
           {([
             ['이름 / 담당 분야', 'name'],
             ['부서', 'department'],
@@ -360,7 +361,7 @@ export default function StaffTable({ initialStaff }: Props) {
           ))}
         </div>
 
-        <div className="divide-y divide-spring-pink-light">
+        <div className="divide-y divide-spring-pink-light min-w-[640px]">
           {pagedStaff.map(s => {
             const isExpanded = expandedId === s.id
             const isEditing = editingId === s.id
@@ -480,7 +481,7 @@ export default function StaffTable({ initialStaff }: Props) {
                     {isEditing && (
                       <div className="space-y-3">
                         <p className="text-xs font-bold text-spring-emerald">✏️ 정보 수정</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <label className="text-xs text-spring-text-light block mb-1">이름</label>
                             <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className={ic} />
@@ -588,6 +589,7 @@ export default function StaffTable({ initialStaff }: Props) {
             </div>
           )}
         </div>
+        </div>{/* overflow-x-auto */}
       </div>
 
       <Pagination

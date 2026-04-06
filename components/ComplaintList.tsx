@@ -20,7 +20,8 @@ export default function ComplaintList({ complaints }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-spring-pink-border overflow-hidden shadow-sm">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[600px]">
         <thead>
           <tr className="bg-spring-pink-light border-b border-spring-pink-border">
             <th className="px-4 py-3 text-left text-spring-text font-semibold w-12">긴급도</th>
@@ -72,6 +73,7 @@ export default function ComplaintList({ complaints }: Props) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

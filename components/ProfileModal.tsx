@@ -87,9 +87,9 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-3 sm:mx-4 overflow-hidden">
         {/* 헤더 */}
-        <div className="spring-gradient px-6 py-4 flex items-center justify-between">
+        <div className="spring-gradient px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-lg font-black text-white">
               {staff.name[0]}
@@ -102,7 +102,7 @@ export default function ProfileModal({ staff, onClose, onUpdated }: Props) {
           <button onClick={onClose} className="text-white/70 hover:text-white text-xl leading-none">✕</button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-6 max-h-[75vh] overflow-y-auto">
           {/* 기본 정보 수정 */}
           <form onSubmit={saveInfo} className="space-y-3">
             <h3 className="text-sm font-bold text-spring-text">기본 정보</h3>

@@ -47,13 +47,13 @@ export default function Navbar() {
           </span>
         </div>
         <div className="flex flex-col justify-center">
-          <span className="text-2xl font-black tracking-tighter text-white drop-shadow-sm flex items-baseline gap-2">
+          <span className="text-xl md:text-2xl font-black tracking-tighter text-white drop-shadow-sm flex items-baseline gap-2">
             baro-dap
             <span className="px-2 py-0.5 rounded border border-white/30 bg-white/20 text-[10px] uppercase font-bold tracking-widest text-white/90">
               {userRole || 'AI'}
             </span>
           </span>
-          <span className="text-[10px] font-medium text-white/80 tracking-widest uppercase mt-0.5">
+          <span className="hidden md:block text-[10px] font-medium text-white/80 tracking-widest uppercase mt-0.5">
             AI Complaint Management
           </span>
         </div>
@@ -77,15 +77,28 @@ export default function Navbar() {
         )}
 
         {userRole === '관리자' && (
-          <Link
-            href="/admin/staff"
-            className="hidden md:flex items-center gap-1.5 text-sm font-bold text-white/90 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 border border-white/20 hover:border-white/40 transition-all"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.63-28.19,8,8,0,1,1-15.72-2.62A40,40,0,1,1,192,112a67.5,67.5,0,0,1,54.4,27.2A8,8,0,0,1,244.8,150.4ZM136,184a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16h88A8,8,0,0,1,136,184Zm-32-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H96A8,8,0,0,1,104,128Zm-8-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H88A8,8,0,0,1,96,72Z"/>
-            </svg>
-            담당자 관리
-          </Link>
+          <>
+            {/* 데스크탑 */}
+            <Link
+              href="/admin/staff"
+              className="hidden md:flex items-center gap-1.5 text-sm font-bold text-white/90 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 border border-white/20 hover:border-white/40 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.63-28.19,8,8,0,1,1-15.72-2.62A40,40,0,1,1,192,112a67.5,67.5,0,0,1,54.4,27.2A8,8,0,0,1,244.8,150.4ZM136,184a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16h88A8,8,0,0,1,136,184Zm-32-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H96A8,8,0,0,1,104,128Zm-8-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H88A8,8,0,0,1,96,72Z"/>
+              </svg>
+              담당자 관리
+            </Link>
+            {/* 모바일 아이콘만 */}
+            <Link
+              href="/admin/staff"
+              className="md:hidden p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              title="담당자 관리"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.63-28.19,8,8,0,1,1-15.72-2.62A40,40,0,1,1,192,112a67.5,67.5,0,0,1,54.4,27.2A8,8,0,0,1,244.8,150.4ZM136,184a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16h88A8,8,0,0,1,136,184Zm-32-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H96A8,8,0,0,1,104,128Zm-8-56a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H88A8,8,0,0,1,96,72Z"/>
+              </svg>
+            </Link>
+          </>
         )}
 
         <div className="h-6 w-px bg-white/30 hidden md:block" />

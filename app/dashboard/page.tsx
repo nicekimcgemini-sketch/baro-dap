@@ -290,7 +290,7 @@ export default function DashboardPage() {
       <div className="fixed top-0 right-0 w-[500px] h-[400px] bg-gradient-to-bl from-spring-pink/10 to-transparent blur-[100px] rounded-full pointer-events-none translate-x-1/4 -translate-y-1/4 z-0" />
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-5 gap-4 relative z-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 relative z-10">
         {statCardDefs.map(({ label, sublabel, value, valueClass, borderClass, iconBg, icon, trend, filter }) => {
           const isActive = filter !== null && isFilterActive(filter)
           return (
@@ -323,7 +323,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 차트 영역 */}
-      <div className="grid grid-cols-4 gap-5 relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 relative z-10">
         {/* 상담원별 문의 현황 */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-6 flex flex-col h-[300px] relative overflow-hidden">
           <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
@@ -645,7 +645,8 @@ export default function DashboardPage() {
             <p className="font-semibold">등록된 문의가 없습니다.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
             <thead>
               <tr className="bg-spring-bg/80 border-b-2 border-spring-emerald/5 text-[11px] text-spring-text/50 uppercase tracking-widest font-black">
                 <th className="px-6 py-5 text-center w-20">긴급도</th>
@@ -770,7 +771,7 @@ export default function DashboardPage() {
                   {isSelected && (
                     <tr key={`${c.id}-accordion`} className="bg-spring-emerald/5 border-l-2 border-spring-emerald">
                       <td colSpan={colSpan} className="px-6 pb-5 pt-0">
-                        <div className="grid grid-cols-2 gap-4 border-t border-spring-emerald/10 pt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-spring-emerald/10 pt-4">
                           <div>
                             <p className="text-[11px] font-bold text-spring-text-light uppercase tracking-wide mb-2">문의 내용</p>
                             <p className="text-sm text-spring-text leading-relaxed whitespace-pre-wrap bg-white rounded-xl px-4 py-3 border border-spring-emerald/10 max-h-36 overflow-y-auto">{c.content}</p>
@@ -804,6 +805,7 @@ export default function DashboardPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
