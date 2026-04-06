@@ -646,16 +646,16 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[560px]">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-spring-bg/80 border-b-2 border-spring-emerald/5 text-[11px] text-spring-text/50 uppercase tracking-widest font-black">
-                <th className="px-6 py-5 text-center w-20">긴급도</th>
-                <th className="px-6 py-5 text-left">제목</th>
-                <th className="px-6 py-5 text-left w-32">상담원</th>
-                <th className="px-6 py-5 text-left w-28">상태</th>
-                <th className="px-6 py-5 text-left w-32">등록일</th>
+                <th className="px-3 py-4 text-center w-14">긴급도</th>
+                <th className="px-3 py-4 text-left">제목</th>
+                <th className="px-3 py-4 text-left w-24">상담원</th>
+                <th className="px-3 py-4 text-left w-20">상태</th>
+                <th className="px-3 py-4 text-left w-24">등록일</th>
                 {staff?.role === 'counselor' && (
-                  <th className="px-6 py-5 text-left w-24">관리</th>
+                  <th className="px-3 py-4 text-left w-20">관리</th>
                 )}
               </tr>
             </thead>
@@ -718,22 +718,22 @@ export default function DashboardPage() {
                     onDoubleClick={() => handleRowDoubleClick(c)}
                     className={`transition-colors group cursor-pointer select-none ${isSelected ? 'bg-spring-emerald/5 border-l-2 border-spring-emerald' : 'hover:bg-spring-emerald/5'}`}
                   >
-                    <td className="px-6 py-4 text-center text-2xl group-hover:scale-110 transition-transform">
+                    <td className="px-3 py-4 text-center text-xl group-hover:scale-110 transition-transform">
                       {c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-extrabold transition-colors ${isSelected ? 'text-spring-pink' : 'text-spring-text group-hover:text-spring-pink'}`}>
+                    <td className="px-3 py-4 max-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`font-extrabold truncate transition-colors ${isSelected ? 'text-spring-pink' : 'text-spring-text group-hover:text-spring-pink'}`}>
                           {c.title}
                         </span>
                         {c.final_response && (
-                          <span className="text-[10px] font-bold bg-spring-emerald-light text-spring-emerald px-2 py-0.5 rounded-md border border-spring-emerald/20 uppercase tracking-wide">
+                          <span className="shrink-0 text-[10px] font-bold bg-spring-emerald-light text-spring-emerald px-2 py-0.5 rounded-md border border-spring-emerald/20 uppercase tracking-wide">
                             답변완료
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-4">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-spring-emerald/20 to-spring-blue/20 flex items-center justify-center text-xs font-black text-spring-text">
                           {c.customer_name?.[0] ?? '?'}
@@ -741,14 +741,14 @@ export default function DashboardPage() {
                         <span className="text-xs font-bold text-spring-text">{c.customer_name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-4">
                       <StatusBadge status={c.status} />
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-spring-text-light">
+                    <td className="px-3 py-4 text-xs font-bold text-spring-text-light">
                       {formatDateShort(c.created_at)}
                     </td>
                     {staff?.role === 'counselor' && (
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-4">
                         {isOwn && (
                           <div className="flex gap-1">
                             <button
