@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>바로답(baro-dap) 프로젝트 진행 보고서</title>
 <style>
   @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap");
@@ -62,6 +63,42 @@
   @media print {
     .page { page-break-before: always; }
     .cover { page-break-after: always; min-height: auto; padding: 60px; }
+  }
+
+  @media (max-width: 768px) {
+    .cover { padding: 48px 24px; min-height: auto; }
+    .cover h1 { font-size: 28px; }
+    .cover p { font-size: 15px; margin-bottom: 24px; }
+    .cover .meta { flex-direction: column; gap: 16px; }
+    .cover .meta div { font-size: 13px; }
+    .cover .meta div strong { font-size: 14px; }
+    .tag-row { gap: 8px; margin-top: 20px; }
+    .tag { font-size: 12px; padding: 4px 12px; }
+
+    .page { padding: 32px 20px; min-height: auto; }
+    .page-title { font-size: 22px; }
+    .page-subtitle { font-size: 13px; margin-bottom: 24px; }
+
+    .info-grid { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .stat-card .num { font-size: 22px; }
+
+    .screenshot { border-radius: 8px; margin: 14px 0; }
+
+    h3.section-title { font-size: 15px; margin: 20px 0 10px; }
+    .comment-box p { font-size: 13px; }
+
+    .todo-section { padding: 18px 16px; }
+    .todo-item .content strong { font-size: 13px; }
+    .todo-item .content p { font-size: 12px; }
+
+    .green-box p { font-size: 13px; }
+  }
+
+  @media (max-width: 480px) {
+    .cover h1 { font-size: 22px; }
+    .page-title { font-size: 18px; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   }
 </style>
 </head>
