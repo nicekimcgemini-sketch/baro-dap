@@ -35,19 +35,19 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="h-20 w-full bg-gradient-to-r from-[#00C2A0] via-[#00B4D8] to-[#FF2A7A] flex items-center justify-between px-6 lg:px-10 shadow-lg sticky top-0 z-50 border-b border-white/20"
+    <nav className="h-14 w-full bg-gradient-to-r from-[#00C2A0] via-[#00B4D8] to-[#FF2A7A] flex items-center justify-between px-4 lg:px-10 shadow-lg sticky top-0 z-50 border-b border-white/20"
       style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
     >
       {/* 앵무새 로고 */}
-      <Link href="/dashboard" className="flex items-center gap-4 group">
-        <div className="relative w-12 h-12 flex items-center justify-center">
+      <Link href="/dashboard" className="flex items-center gap-2 group">
+        <div className="relative w-8 h-8 flex items-center justify-center">
           <div className="absolute inset-0 bg-white/40 blur-md rounded-full group-hover:scale-110 transition-transform duration-500" />
-          <span className="text-[36px] relative z-10 drop-shadow-xl" style={{ animation: 'float 6s ease-in-out infinite' }}>
+          <span className="text-[24px] relative z-10 drop-shadow-xl" style={{ animation: 'float 6s ease-in-out infinite' }}>
             🦜
           </span>
         </div>
         <div className="flex flex-col justify-center">
-          <span className="text-xl md:text-2xl font-black tracking-tighter text-white drop-shadow-sm flex items-baseline gap-2">
+          <span className="text-base md:text-2xl font-black tracking-tighter text-white drop-shadow-sm flex items-baseline gap-1.5">
             baro-dap
             <span className="px-2 py-0.5 rounded border border-white/30 bg-white/20 text-[10px] uppercase font-bold tracking-widest text-white/90">
               {userRole || 'AI'}

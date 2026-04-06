@@ -19,62 +19,89 @@ export default function ComplaintList({ complaints }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-spring-pink-border overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-      <table className="w-full text-sm min-w-[600px]">
-        <thead>
-          <tr className="bg-spring-pink-light border-b border-spring-pink-border">
-            <th className="px-4 py-3 text-left text-spring-text font-semibold w-12">긴급도</th>
-            <th className="px-4 py-3 text-left text-spring-text font-semibold">제목</th>
-            <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">분류</th>
-            <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">상담원명</th>
-            <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">상태</th>
-            <th className="px-4 py-3 text-left text-spring-text font-semibold w-32">접수일시</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-spring-pink-light">
-          {complaints.map((c) => (
-            <tr key={c.id} className="hover:bg-spring-emerald-light transition-colors">
-              <td className="px-4 py-3 text-center text-lg">
-                {c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link href={`/counsel/${c.id}`} className="text-spring-text hover:text-spring-pink font-medium transition">
-                    {c.title}
-                  </Link>
-                  {c.ai_analysis?.is_legal_sensitive && (
-                    <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 shrink-0"
-                      title={c.ai_analysis.legal_topics?.join(', ')}
-                    >
-                      ⚖️ 법령 관련
+    <>
+      {/* 모바일 카드 레이아웃 */}
+      <div className="md:hidden space-y-2">
+        {complaints.map((c) => (
+          <Link key={c.id} href={`/counsel/${c.id}`}
+            className="block bg-white rounded-2xl border border-spring-pink-border p-4 shadow-sm active:bg-spring-emerald-light transition-colors"
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-xl shrink-0 mt-0.5">{c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}</span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-spring-text text-sm leading-snug line-clamp-2">{c.title}</p>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <StatusBadge status={c.status} />
+                  {c.category && (
+                    <span className="bg-spring-pink-light text-spring-pink px-2 py-0.5 rounded-full text-xs font-medium">
+                      {c.category}
                     </span>
                   )}
+                  {c.ai_analysis?.is_legal_sensitive && (
+                    <span className="text-xs text-amber-600 font-semibold">⚖️ 법령</span>
+                  )}
                 </div>
-              </td>
-              <td className="px-4 py-3">
-                {c.category ? (
-                  <span className="bg-spring-pink-light text-spring-pink px-2 py-0.5 rounded-full text-xs font-medium">
-                    {c.category}
-                  </span>
-                ) : (
-                  <span className="text-spring-text-light text-xs">분석중</span>
-                )}
-              </td>
-              <td className="px-4 py-3 text-spring-text">{c.customer_name}</td>
-              <td className="px-4 py-3">
-                <StatusBadge status={c.status} />
-              </td>
-              <td className="px-4 py-3 text-spring-text-light text-xs">
-                {formatDateShort(c.created_at)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-xs text-spring-text-light">{c.customer_name}</span>
+                  <span className="text-xs text-spring-text-light">{formatDateShort(c.created_at)}</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
-    </div>
+
+      {/* 데스크탑 테이블 */}
+      <div className="hidden md:block bg-white rounded-2xl border border-spring-pink-border overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
+            <thead>
+              <tr className="bg-spring-pink-light border-b border-spring-pink-border">
+                <th className="px-4 py-3 text-left text-spring-text font-semibold w-12">긴급도</th>
+                <th className="px-4 py-3 text-left text-spring-text font-semibold">제목</th>
+                <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">분류</th>
+                <th className="px-4 py-3 text-left text-spring-text font-semibold w-24">상담원명</th>
+                <th className="px-4 py-3 text-left text-spring-text font-semibold w-20">상태</th>
+                <th className="px-4 py-3 text-left text-spring-text font-semibold w-32">접수일시</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-spring-pink-light">
+              {complaints.map((c) => (
+                <tr key={c.id} className="hover:bg-spring-emerald-light transition-colors">
+                  <td className="px-4 py-3 text-center text-lg">
+                    {c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}
+                  </td>
+                  <td className="px-4 py-3 max-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link href={`/counsel/${c.id}`} className="truncate text-spring-text hover:text-spring-pink font-medium transition">
+                        {c.title}
+                      </Link>
+                      {c.ai_analysis?.is_legal_sensitive && (
+                        <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          ⚖️ 법령
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.category ? (
+                      <span className="bg-spring-pink-light text-spring-pink px-2 py-0.5 rounded-full text-xs font-medium">
+                        {c.category}
+                      </span>
+                    ) : (
+                      <span className="text-spring-text-light text-xs">분석중</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-spring-text">{c.customer_name}</td>
+                  <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+                  <td className="px-4 py-3 text-spring-text-light text-xs">{formatDateShort(c.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   )
 }
 

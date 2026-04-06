@@ -37,23 +37,25 @@ export default async function AdminPage() {
   ]
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-bold text-spring-text">관리자 대시보드</h1>
+    <div className="space-y-4">
+      <h1 className="text-lg font-bold text-spring-text">관리자 대시보드</h1>
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* 통계 카드 - 1줄 compact */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {statCards.map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-            <p className="text-sm text-spring-text-light mb-1">{label}</p>
-            <p className={`text-3xl font-bold ${color}`}>{value}</p>
+          <div key={label} className="shrink-0 bg-white rounded-xl border border-spring-pink-border px-3 py-2.5 shadow-sm flex items-center gap-2.5">
+            <div>
+              <p className={`text-xl font-black ${color}`}>{value}</p>
+              <p className="text-[11px] text-spring-text-light whitespace-nowrap">{label}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 긴급도별 */}
-        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-          <h2 className="font-semibold text-spring-text mb-4">긴급도별 현황</h2>
+        <div className="bg-white rounded-2xl border border-spring-pink-border p-4 shadow-sm">
+          <h2 className="font-semibold text-spring-text text-sm mb-3">긴급도별 현황</h2>
           <div className="space-y-2">
             {byPriority.map(({ p, count }) => (
               <div key={p} className="flex items-center gap-3">
@@ -71,15 +73,15 @@ export default async function AdminPage() {
         </div>
 
         {/* 카테고리별 */}
-        <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-          <h2 className="font-semibold text-spring-text mb-4">카테고리별 현황</h2>
+        <div className="bg-white rounded-2xl border border-spring-pink-border p-4 shadow-sm">
+          <h2 className="font-semibold text-spring-text text-sm mb-3">카테고리별 현황</h2>
           {categories.length === 0 ? (
             <p className="text-spring-text-light text-sm">데이터 없음</p>
           ) : (
             <div className="space-y-2">
               {categories.map(([cat, count]) => (
                 <div key={cat} className="flex items-center gap-3">
-                  <span className="text-sm text-spring-text w-16">{cat}</span>
+                  <span className="text-xs text-spring-text w-20 shrink-0 truncate">{cat}</span>
                   <div className="flex-1 bg-spring-emerald-light rounded-full h-2">
                     <div
                       className="bg-spring-emerald h-2 rounded-full"
@@ -95,18 +97,16 @@ export default async function AdminPage() {
       </div>
 
       {/* 최근 민원 */}
-      <div className="bg-white rounded-2xl border border-spring-pink-border p-5 shadow-sm">
-        <h2 className="font-semibold text-spring-text mb-4">최근 민원</h2>
-        <div className="space-y-2">
+      <div className="bg-white rounded-2xl border border-spring-pink-border p-4 shadow-sm">
+        <h2 className="font-semibold text-spring-text text-sm mb-3">최근 민원</h2>
+        <div className="space-y-1">
           {complaints.slice(0, 5).map((c) => (
-            <div key={c.id} className="flex items-center justify-between text-sm py-2 border-b border-spring-pink-light">
-              <div className="flex items-center gap-2">
-                <span>{c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}</span>
-                <a href={`/counsel/${c.id}`} className="text-spring-text hover:text-spring-pink transition">
-                  {c.title}
-                </a>
-              </div>
-              <span className="text-spring-text-light text-xs">{formatDateShort(c.created_at)}</span>
+            <div key={c.id} className="flex items-center gap-2 text-sm py-2 border-b border-spring-pink-light">
+              <span className="shrink-0">{c.priority ? PRIORITY_EMOJI[c.priority] : '⏳'}</span>
+              <a href={`/counsel/${c.id}`} className="flex-1 min-w-0 truncate text-spring-text hover:text-spring-pink transition">
+                {c.title}
+              </a>
+              <span className="shrink-0 text-spring-text-light text-xs">{formatDateShort(c.created_at)}</span>
             </div>
           ))}
         </div>
