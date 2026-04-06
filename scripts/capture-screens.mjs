@@ -20,7 +20,7 @@ async function capture(page, name, waitFor) {
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    defaultViewport: { width: 1440, height: 900 }
+    defaultViewport: { width: 393, height: 852, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
   })
   const page = await browser.newPage()
 
