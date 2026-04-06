@@ -319,7 +319,7 @@ export default function DashboardPage() {
       {/* 차트 영역 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 relative z-10">
         {/* 상담원별 문의 현황 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px] relative overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col sm:h-[260px] relative overflow-hidden">
           <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
             <span className="text-[160px]">👥</span>
           </div>
@@ -361,7 +361,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 일별 접수 추이 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px]">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col sm:h-[260px]">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-extrabold text-spring-text text-sm flex items-center gap-2">
               <span className="text-spring-pink">📊</span> 일별 접수 (7일)
@@ -393,8 +393,8 @@ export default function DashboardPage() {
         </div>
 
         {/* 긴급도별 현황 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px]">
-          <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col sm:h-[260px]">
+          <h3 className="font-extrabold text-spring-text text-sm mb-3 flex items-center gap-2">
             <span className="text-priority-high">🔥</span> 긴급도 분포
           </h3>
           <div className="flex-1 flex flex-col justify-between">
@@ -438,8 +438,8 @@ export default function DashboardPage() {
         </div>
 
         {/* 카테고리별 현황 */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col h-[220px] sm:h-[260px]">
-          <h3 className="font-extrabold text-spring-text text-sm mb-5 flex items-center gap-2">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-spring-emerald/10 shadow-feather p-4 flex flex-col sm:h-[260px]">
+          <h3 className="font-extrabold text-spring-text text-sm mb-3 flex items-center gap-2">
             <span className="text-spring-orange">🗂️</span> 카테고리별
           </h3>
           {categoryStats.length === 0 ? (
